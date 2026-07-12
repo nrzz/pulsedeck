@@ -13,11 +13,12 @@ PulseDeck is a **Windows desktop app**. Most users only need the installer from 
 
 ### First launch checklist
 
-- Floating glass widgets appear over the desktop wallpaper (not a big dark window)
-- Hover the **top edge** of the board to reveal Edit / Settings
+- Glass widgets appear **pinned to the desktop wallpaper** (behind apps; top-right by default)
+- Toolbar shows **Edit / Add / Presets / Customize** (always visible unless locked)
 - Closing the board **hides to the tray** (does not quit)
-- **Ctrl+Alt+P** toggles show/hide
-- Tray icon → right-click → **Open / Lock / Quit**
+- **Ctrl+Alt+P** toggles show/hide · **Ctrl+Alt+E** edit · **Ctrl+Alt+L** lock
+- Tray **click or right-click** opens the menu — the board stays visible (including when using `^`)
+- Optional tray item: **Float over apps** if you want the board above Chrome/etc.
 
 ---
 
@@ -80,10 +81,26 @@ Your config in `%APPDATA%\PulseDeck` may remain; delete that folder manually if 
 
 ## Build from source (developers)
 
+Fresh clone from GitHub (or any git remote):
+
 ```bash
 git clone https://github.com/nrzz/pulsedeck.git
 cd pulsedeck
 npm install
+npm run typecheck
+npm run build
+```
+
+### Dev (browser)
+
+```bash
+npm run dev
+# UI http://localhost:5173 — API http://127.0.0.1:8787
+```
+
+### Desktop installer
+
+```bash
 npm run dist
 ```
 
@@ -92,6 +109,16 @@ Installer output:
 ```
 apps/desktop/release/PulseDeck-Setup-1.0.0.exe
 ```
+
+### Verify after clone
+
+With `npm run dev` running in one terminal:
+
+```bash
+npm run test:e2e:full
+```
+
+Checks WorkerW/tray source contracts, APIs (including `/api/news`), and that all catalog widgets can be placed on the board.
 
 ### Requirements
 
@@ -114,10 +141,12 @@ CI (GitHub Actions) builds normally without this issue.
 | Problem                        | Fix                                                                                          |
 | ------------------------------ | -------------------------------------------------------------------------------------------- |
 | App won’t start / blank window | Quit from tray, delete `%APPDATA%\PulseDeck\config.json`, relaunch                           |
+| Board disappears on tray `^`   | Update to a build with WorkerW pin; tray should only open the menu                           |
 | No live metrics                | Wait a few seconds on first launch (Windows WMI warmup). Check tray isn’t a crashed instance |
-| Crypto / weather empty         | Need internet access for those widgets                                                       |
+| Crypto / weather / news empty  | Need internet access for those widgets                                                       |
 | Port conflict                  | Desktop picks a free port automatically; reboot if something is wedged                       |
 | Dual instances                 | PulseDeck is single-instance — second launch focuses the first window                        |
+| High memory                    | Prefer compact presets; News tray uses titles only — avoid Full monitor unless needed        |
 
 Still stuck? Open a GitHub issue with:
 

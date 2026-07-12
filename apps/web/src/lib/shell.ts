@@ -2,8 +2,17 @@ export interface PulseDeckBridge {
   isWidgetMode: true;
   getLocked: () => Promise<boolean>;
   setLocked: (locked: boolean) => Promise<boolean>;
+  getAlwaysOnTop?: () => Promise<boolean>;
+  setAlwaysOnTop?: (v: boolean) => Promise<boolean>;
+  resetCorner?: (
+    corner?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left',
+    size?: 'compact' | 'medium' | 'wide',
+  ) => Promise<boolean>;
+  listDisplays?: () => Promise<unknown[]>;
   onLockedChanged: (cb: (locked: boolean) => void) => () => void;
   onEditLayout: (cb: () => void) => () => void;
+  onOpenSettings?: (cb: () => void) => () => void;
+  onAddWidget?: (cb: () => void) => () => void;
   toggleEdit: () => void;
   openSettings: () => void;
 }

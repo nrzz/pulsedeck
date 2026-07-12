@@ -31,7 +31,8 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,css}\"",
     "test:e2e": "node scripts/e2e-ui.mjs",
     "test:e2e:dnd": "node scripts/e2e-dnd.mjs",
-    "test:e2e:widget": "node scripts/e2e-widget.mjs"
+    "test:e2e:widget": "node scripts/e2e-widget.mjs",
+    "test:e2e:full": "node scripts/e2e-full.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

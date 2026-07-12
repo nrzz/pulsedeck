@@ -109,7 +109,7 @@ export function Header() {
             data-testid="open-settings"
           >
             <Settings size={14} />
-            <span className="hidden sm:inline">Settings</span>
+            <span className="hidden sm:inline">Customize</span>
           </button>
         </div>
 

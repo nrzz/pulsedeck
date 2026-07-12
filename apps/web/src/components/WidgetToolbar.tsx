@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { LayoutGrid, Lock, LockOpen, Plus, Save, Settings, Wifi, WifiOff } from 'lucide-react';
+import { LayoutGrid, Lock, LockOpen, Plus, Save, Settings, Sparkles, Wifi, WifiOff } from 'lucide-react';
 import { useDashboard } from '../store/dashboard';
 import { persistConfig } from '../hooks/useWebSocket';
 import { useToast } from '../store/toast';
@@ -18,7 +18,6 @@ export function WidgetToolbar() {
   const showToast = useToast((s) => s.show);
   const [saving, setSaving] = useState(false);
   const [locked, setLocked] = useState(false);
-  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
     const api = window.pulsedeck;
@@ -26,32 +25,34 @@ export function WidgetToolbar() {
     void api.getLocked().then(setLocked);
     const offLock = api.onLockedChanged(setLocked);
     const offEdit = api.onEditLayout(() => setEditMode(true));
+    const offSettings = api.onOpenSettings?.(() => setSettingsOpen(true));
+    const offAdd = api.onAddWidget?.(() => {
+      setEditMode(true);
+      setAddWidgetOpen(true);
+    });
     return () => {
       offLock();
       offEdit();
+      offSettings?.();
+      offAdd?.();
     };
-  }, [setEditMode]);
+  }, [setEditMode, setSettingsOpen, setAddWidgetOpen]);
 
   const hideForLock = locked && (shell?.hideToolbarWhenLocked ?? true) && !editMode;
-  // Hidden by default — only show on hover or while editing
-  const visible = !hideForLock && (hovered || editMode);
+  // Always visible so Customize / Settings are discoverable (not hover-only)
+  const visible = !hideForLock;
 
   return (
     <div
       className="widget-chrome"
       data-testid="widget-toolbar"
       data-visible={visible ? 'true' : 'false'}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
-      {/* Always-present thin drag/hover strip so the board stays movable */}
-      <div className="widget-chrome-hit" style={dragStyle} aria-hidden />
-
       <div
         className={cn(
-          'widget-drag-strip mx-3 mt-2 inline-flex items-center gap-1 rounded-full border border-white/12 px-1.5 py-1 transition-all duration-200',
-          'bg-black/45 backdrop-blur-xl shadow-[0_8px_28px_rgba(0,0,0,0.4)]',
-          visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none',
+          'widget-drag-strip mx-3 mt-2 inline-flex items-center gap-1 rounded-full border border-white/12 px-1.5 py-1',
+          'bg-black/55 backdrop-blur-xl shadow-[0_8px_28px_rgba(0,0,0,0.4)]',
+          visible ? 'opacity-100' : 'opacity-0 pointer-events-none',
         )}
         style={dragStyle}
       >
@@ -73,7 +74,7 @@ export function WidgetToolbar() {
           <button
             type="button"
             className={cn(
-              'btn !py-1 !px-2 !rounded-full !text-xs',
+              'btn !py-1 !px-2 !rounded-full !text-xs inline-flex items-center gap-1',
               editMode && 'bg-accent text-white border-transparent',
             )}
             onClick={() => setEditMode(!editMode)}
@@ -81,17 +82,19 @@ export function WidgetToolbar() {
             data-testid="edit-toggle"
           >
             <LayoutGrid size={13} />
+            <span className="font-medium">{editMode ? 'Done' : 'Edit'}</span>
           </button>
 
           {editMode && (
             <button
               type="button"
-              className="btn !py-1 !px-2 !rounded-full"
+              className="btn !py-1 !px-2 !rounded-full !text-xs inline-flex items-center gap-1"
               onClick={() => setAddWidgetOpen(true)}
               data-testid="add-widget"
               title="Add widget"
             >
               <Plus size={13} />
+              <span className="font-medium">Add</span>
             </button>
           )}
 
@@ -133,12 +136,32 @@ export function WidgetToolbar() {
 
           <button
             type="button"
-            className="btn !py-1 !px-2 !rounded-full"
+            className="btn !py-1 !px-2 !rounded-full !text-xs inline-flex items-center gap-1"
+            onClick={() => {
+              setSettingsOpen(true);
+              requestAnimationFrame(() => {
+                document.querySelector('[data-testid="layout-packs"]')?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'nearest',
+                });
+              });
+            }}
+            data-testid="open-presets"
+            title="Layout packs"
+          >
+            <Sparkles size={13} />
+            <span className="font-medium">Presets</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn-accent !py-1 !px-2.5 !rounded-full !text-xs inline-flex items-center gap-1"
             onClick={() => setSettingsOpen(true)}
             data-testid="open-settings"
-            title="Settings"
+            title="Customize board"
           >
             <Settings size={13} />
+            <span className="font-medium">Customize</span>
           </button>
         </div>
       </div>

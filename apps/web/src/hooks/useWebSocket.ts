@@ -8,11 +8,38 @@ import type {
   WeatherData,
   WsMessage,
 } from '@pulsedeck/shared';
-import { createDesktopPreset } from '@pulsedeck/shared';
+import { createDesktopPreset, BANGALORE } from '@pulsedeck/shared';
 import { useDashboard } from '../store/dashboard';
 import { isWidgetShell } from '../lib/shell';
 
 const DESKTOP_PRESET_FLAG = 'pulsedeck.widgetDesktopPreset';
+const WEATHER_BLR_FLAG = 'pulsedeck.weatherBangalore';
+
+function migrateWeatherToBangalore(config: AppConfig): { config: AppConfig; changed: boolean } {
+  const already =
+    typeof localStorage !== 'undefined' && localStorage.getItem(WEATHER_BLR_FLAG) === '1';
+  if (already) return { config, changed: false };
+
+  let changed = false;
+  const presets = config.presets.map((preset) => ({
+    ...preset,
+    widgets: preset.widgets.map((w) => {
+      if (w.type !== 'weather') return w;
+      const city = String(w.settings?.city ?? '');
+      const lat = Number(w.settings?.lat);
+      const isDelhi =
+        city === 'New Delhi' || city === 'Delhi' || lat === 28.6139 || Number.isNaN(lat);
+      if (!isDelhi && city && city !== 'Bangalore') return w;
+      if (city === 'Bangalore' && lat === BANGALORE.lat) return w;
+      changed = true;
+      return { ...w, settings: { ...w.settings, ...BANGALORE } };
+    }),
+  }));
+
+  if (typeof localStorage !== 'undefined') localStorage.setItem(WEATHER_BLR_FLAG, '1');
+  if (!changed) return { config, changed: false };
+  return { config: { ...config, presets }, changed: true };
+}
 
 function migrateWidgetDesktopPreset(config: AppConfig): { config: AppConfig; changed: boolean } {
   if (!isWidgetShell()) return { config, changed: false };
@@ -35,8 +62,22 @@ function migrateWidgetDesktopPreset(config: AppConfig): { config: AppConfig; cha
     localStorage.setItem(DESKTOP_PRESET_FLAG, '1');
   }
 
+  // Expand slim desktop presets that still lack disk
+  const desktop = presets.find((p) => p.id === 'desktop');
+  if (desktop && !desktop.widgets.some((w) => w.type === 'disk')) {
+    const fresh = createDesktopPreset();
+    presets = presets.map((p) => (p.id === 'desktop' ? fresh : p));
+    changed = true;
+  }
+
   if (changed) return { config: { ...config, presets }, changed: true };
   return { config, changed: false };
+}
+
+function migrateConfig(config: AppConfig): { config: AppConfig; changed: boolean } {
+  const a = migrateWidgetDesktopPreset(config);
+  const b = migrateWeatherToBangalore(a.config);
+  return { config: b.config, changed: a.changed || b.changed };
 }
 
 function wsUrl(): string {
@@ -99,9 +140,9 @@ async function bootstrapExternal(config: AppConfig) {
   }
 
   if (weatherCfg || widgets.some((w) => w.type === 'weather')) {
-    const lat = weatherCfg?.lat ?? 28.6139;
-    const lon = weatherCfg?.lon ?? 77.209;
-    const city = weatherCfg?.city ?? 'New Delhi';
+    const lat = weatherCfg?.lat ?? 12.9716;
+    const lon = weatherCfg?.lon ?? 77.5946;
+    const city = weatherCfg?.city ?? 'Bangalore';
     tasks.push(
       fetch(`/api/weather?lat=${lat}&lon=${lon}&city=${encodeURIComponent(city)}`)
         .then((r) => r.json())
@@ -123,6 +164,53 @@ async function bootstrapExternal(config: AppConfig) {
         .catch(() => undefined),
     );
   }
+
+  const fxWidget = widgets.find((w) => w.type === 'exchange');
+  if (fxWidget || widgets.some((w) => w.type === 'portfolio')) {
+    const pairs = ((fxWidget?.settings.pairs as string[]) || ['USD/INR', 'EUR/INR']).join(',');
+    tasks.push(
+      fetch(`/api/exchange?pairs=${encodeURIComponent(pairs)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (Array.isArray(data) && data.length) useDashboard.getState().setExchange(data);
+        })
+        .catch(() => undefined),
+    );
+  }
+
+  const aqiCfg = widgets.find((w) => w.type === 'aqi')?.settings as
+    | { lat?: number; lon?: number; city?: string }
+    | undefined;
+  if (aqiCfg || widgets.some((w) => w.type === 'aqi')) {
+    const lat = aqiCfg?.lat ?? 12.9716;
+    const lon = aqiCfg?.lon ?? 77.5946;
+    const city = aqiCfg?.city ?? 'Bangalore';
+    tasks.push(
+      fetch(`/api/aqi?lat=${lat}&lon=${lon}&city=${encodeURIComponent(city)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.value != null) useDashboard.getState().setAqi(data);
+        })
+        .catch(() => undefined),
+    );
+  }
+
+  const headlineCfg = widgets.find((w) => w.type === 'headline')?.settings as
+    | { feedUrl?: string }
+    | undefined;
+  if (headlineCfg || widgets.some((w) => w.type === 'headline')) {
+    const url = headlineCfg?.feedUrl || 'https://news.ycombinator.com/rss';
+    tasks.push(
+      fetch(`/api/headline?url=${encodeURIComponent(url)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.title) useDashboard.getState().setHeadline(data);
+        })
+        .catch(() => undefined),
+    );
+  }
+
+  // News trays fetch themselves (per-widget, long interval) — skip heavy bootstrap here
 
   await Promise.all(tasks);
 }
@@ -187,7 +275,7 @@ export function useWebSocket() {
               setWeather(msg.payload as WeatherData);
               break;
             case 'config': {
-              const { config: next, changed } = migrateWidgetDesktopPreset(
+              const { config: next, changed } = migrateConfig(
                 msg.payload as AppConfig,
               );
               setConfig(next);
@@ -208,7 +296,7 @@ export function useWebSocket() {
     fetch('/api/config')
       .then((r) => r.json())
       .then((c: AppConfig) => {
-        const { config: next, changed } = migrateWidgetDesktopPreset(c);
+        const { config: next, changed } = migrateConfig(c);
         setConfig(next);
         applyTheme();
         void bootstrapExternal(next);

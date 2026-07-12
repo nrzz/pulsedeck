@@ -10,6 +10,8 @@ interface WidgetShellProps {
   className?: string;
   actions?: ReactNode;
   onSettings?: () => void;
+  /** Tint card when a threshold is exceeded */
+  alert?: boolean;
 }
 
 export function WidgetShell({
@@ -19,20 +21,31 @@ export function WidgetShell({
   className,
   actions,
   onSettings,
+  alert,
 }: WidgetShellProps) {
   const editMode = useDashboard((s) => s.editMode);
   const removeWidget = useDashboard((s) => s.removeWidget);
   const density = useDashboard((s) => s.config.theme.density);
+  const showTitles = useDashboard((s) => s.config.theme.showWidgetTitles !== false);
 
   return (
     <div
       className={cn(
         'glass-card group/card h-full flex flex-col relative',
-        density === 'compact' ? 'p-3' : 'p-4',
+        density === 'compact' ? 'p-3' : density === 'spacious' ? 'p-5' : 'p-4',
         editMode && 'edit-widget ring-1 ring-accent/30 hover:ring-accent/60',
+        alert && 'ring-1 ring-amber-400/50 bg-amber-500/[0.06]',
         className,
       )}
+      data-alert={alert ? 'true' : undefined}
     >
+      {alert && (
+        <span
+          className="absolute top-2 right-2 z-[2] w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"
+          title="Threshold exceeded"
+          data-testid="alert-dot"
+        />
+      )}
       {editMode && (
         <div className="pointer-events-none absolute inset-0 rounded-2xl bg-accent/[0.03]" />
       )}
@@ -42,6 +55,7 @@ export function WidgetShell({
           'widget-drag-region flex items-center gap-2 mb-3 shrink-0 relative z-[1] min-h-[28px]',
           editMode &&
             '-mx-1 px-1 py-1 rounded-xl cursor-grab active:cursor-grabbing select-none hover:bg-white/[0.04]',
+          !showTitles && !editMode && !actions && !onSettings && 'sr-only',
         )}
         data-testid="widget-drag-handle"
       >
@@ -50,7 +64,7 @@ export function WidgetShell({
             <GripVertical size={18} />
           </span>
         )}
-        <h3 className="widget-title flex-1 truncate">{title}</h3>
+        <h3 className={cn('widget-title flex-1 truncate', !showTitles && 'sr-only')}>{title}</h3>
         <div
           className="flex items-center gap-1 shrink-0"
           data-no-drag
@@ -62,10 +76,11 @@ export function WidgetShell({
           {onSettings && (
             <button
               type="button"
-              className="p-1 rounded-lg text-ink-muted hover:text-ink hover:bg-white/5 transition"
+              className="p-1 rounded-lg text-ink-muted hover:text-ink hover:bg-white/5 transition opacity-70 group-hover/card:opacity-100"
               onClick={onSettings}
               title="Configure widget"
               aria-label="Configure widget"
+              data-testid="widget-gear"
             >
               <Settings2 size={14} />
             </button>

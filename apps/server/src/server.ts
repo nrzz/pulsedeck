@@ -7,9 +7,9 @@ import fastifyStatic from '@fastify/static';
 import si from 'systeminformation';
 import type { AppConfig, WsMessage } from '@pulsedeck/shared';
 import { loadConfig, saveConfig, setDataDir } from './config.js';
-import { collectMetrics } from './collectors/metrics.js';
+import { collectMetrics, setActiveWidgetTypes } from './collectors/metrics.js';
 import { pingHosts } from './collectors/ping.js';
-import { fetchCrypto, fetchStocks, fetchWeather } from './collectors/external.js';
+import { fetchCrypto, fetchStocks, fetchWeather, fetchExchange, fetchAqi, fetchHeadline, fetchNews } from './collectors/external.js';
 import { WsHub } from './ws-hub.js';
 
 export interface StartServerOptions {
@@ -47,6 +47,12 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
     const preset = config.presets.find((p) => p.id === config.activePresetId) ?? config.presets[0];
     return preset?.widgets ?? [];
   }
+
+  function syncDemandGates() {
+    setActiveWidgetTypes(getActiveWidgets().map((w) => w.type));
+  }
+
+  syncDemandGates();
 
   function extractSettings<T extends Record<string, unknown>>(type: string): T[] {
     return getActiveWidgets()
@@ -112,8 +118,8 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
     );
     if (!weatherWidgets.length) return;
     const w = weatherWidgets[0];
-    const lat = w.lat ?? 28.6139;
-    const lon = w.lon ?? 77.209;
+    const lat = w.lat ?? 12.9716;
+    const lon = w.lon ?? 77.5946;
     try {
       const data = await fetchWeather(lat, lon, w.city);
       if (data) hub.broadcast({ type: 'weather', payload: data });
@@ -138,6 +144,7 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
   app.put<{ Body: AppConfig }>('/api/config', async (req) => {
     config = { ...req.body, version: req.body.version ?? 1 };
     saveConfig(config);
+    syncDemandGates();
     hub.broadcast({ type: 'config', payload: config });
     return config;
   });
@@ -148,8 +155,10 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
       ...req.body,
       theme: { ...config.theme, ...req.body.theme },
       apiKeys: { ...config.apiKeys, ...req.body.apiKeys },
+      shell: req.body.shell ? { ...config.shell, ...req.body.shell } : config.shell,
     };
     saveConfig(config);
+    syncDemandGates();
     hub.broadcast({ type: 'config', payload: config });
     return config;
   });
@@ -168,9 +177,42 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
 
   app.get('/api/weather', async (req) => {
     const q = req.query as { lat?: string; lon?: string; city?: string };
-    const lat = Number(q.lat ?? 28.6139);
-    const lon = Number(q.lon ?? 77.209);
+    const lat = Number(q.lat ?? 12.9716);
+    const lon = Number(q.lon ?? 77.5946);
     return fetchWeather(lat, lon, q.city);
+  });
+
+  app.get('/api/exchange', async (req) => {
+    const q = req.query as { pairs?: string };
+    const pairs = (q.pairs || 'USD/INR,EUR/INR').split(',').map((s) => s.trim());
+    return fetchExchange(pairs);
+  });
+
+  app.get('/api/aqi', async (req) => {
+    const q = req.query as { lat?: string; lon?: string; city?: string };
+    const lat = Number(q.lat ?? 12.9716);
+    const lon = Number(q.lon ?? 77.5946);
+    return fetchAqi(lat, lon, q.city);
+  });
+
+  app.get('/api/headline', async (req) => {
+    const q = req.query as { url?: string };
+    const url = q.url || 'https://news.ycombinator.com/rss';
+    return fetchHeadline(url);
+  });
+
+  app.get('/api/news', async (req) => {
+    const q = req.query as { topics?: string; feeds?: string; limit?: string };
+    const topics = (q.topics || 'technology,world')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const feeds = (q.feeds || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const limit = Number(q.limit) || 5;
+    return fetchNews({ topics, feeds, limit });
   });
 
   app.get('/api/ping', async (req) => {
@@ -220,7 +262,8 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
 
   hub.startHeartbeat();
 
-  timers.push(setInterval(broadcastMetrics, 2000));
+  // 5s keeps vitals fresh without thrashing systeminformation / UI re-renders
+  timers.push(setInterval(broadcastMetrics, 5000));
   timers.push(setInterval(broadcastPing, 10000));
   timers.push(setInterval(broadcastCrypto, 60000));
   timers.push(setInterval(broadcastStocks, 60000));

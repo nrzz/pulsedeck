@@ -12,6 +12,9 @@ type SlowCache = {
   battery?: SystemMetrics['battery'];
   system?: SystemMetrics['system'];
   localIps: string[];
+  fans?: SystemMetrics['fans'];
+  diskIO?: SystemMetrics['diskIO'];
+  cpuSpeed?: { speed?: number; speedMin?: number; speedMax?: number };
   updatedAt: number;
 };
 
@@ -28,7 +31,31 @@ let lastFast: {
   network: SystemMetrics['network'];
 } | null = null;
 
-const SLOW_TTL = 4000;
+const SLOW_TTL = 8000;
+
+/** Widget types present on the active preset — gates expensive collectors. */
+let activeWidgetTypes = new Set<string>();
+
+export function setActiveWidgetTypes(types: Iterable<string>): void {
+  activeWidgetTypes = new Set(types);
+}
+
+function needsDiskIO(): boolean {
+  return (
+    activeWidgetTypes.size === 0 ||
+    activeWidgetTypes.has('disk-io') ||
+    activeWidgetTypes.has('sensors') ||
+    activeWidgetTypes.has('alerts')
+  );
+}
+
+function needsCpuSpeed(): boolean {
+  return (
+    activeWidgetTypes.size === 0 ||
+    activeWidgetTypes.has('cpu-freq') ||
+    activeWidgetTypes.has('sensors')
+  );
+}
 
 async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -69,7 +96,7 @@ async function refreshSlowMetrics(): Promise<void> {
   const first = slowCache.updatedAt === 0;
   const t = (ms: number) => (first ? Math.max(ms * 4, 8000) : ms);
 
-  const [graphics, fsSize, wifiConnections, battery, processes, osInfo, system, networkInterfaces] =
+  const [graphics, fsSize, wifiConnections, battery, processes, osInfo, system, networkInterfaces, disksIO, cpuCurrentSpeed] =
     await Promise.all([
       withTimeout(si.graphics(), t(4000)),
       withTimeout(si.fsSize(), t(5000)),
@@ -85,6 +112,12 @@ async function refreshSlowMetrics(): Promise<void> {
       withTimeout(si.osInfo(), t(5000)),
       withTimeout(si.system(), t(3000)),
       withTimeout(si.networkInterfaces(), t(3000)),
+      needsDiskIO()
+        ? withTimeout(si.disksIO().catch(() => null), t(3000))
+        : Promise.resolve(null),
+      needsCpuSpeed()
+        ? withTimeout(si.cpuCurrentSpeed().catch(() => null), t(2500))
+        : Promise.resolve(null),
     ]);
 
   const time = si.time();
@@ -178,6 +211,22 @@ async function refreshSlowMetrics(): Promise<void> {
             uptime: time.uptime,
           },
     localIps: localIps.length ? localIps : slowCache.localIps,
+    fans: slowCache.fans || [],
+    diskIO: disksIO
+      ? {
+          rIO_sec: disksIO.rIO_sec ?? undefined,
+          wIO_sec: disksIO.wIO_sec ?? undefined,
+          rBytesPerSec: Number((disksIO as { r_sec?: number }).r_sec) || undefined,
+          wBytesPerSec: Number((disksIO as { w_sec?: number }).w_sec) || undefined,
+        }
+      : slowCache.diskIO,
+    cpuSpeed: cpuCurrentSpeed
+      ? {
+          speed: cpuCurrentSpeed.avg,
+          speedMin: cpuCurrentSpeed.min,
+          speedMax: cpuCurrentSpeed.max,
+        }
+      : slowCache.cpuSpeed,
     updatedAt: Date.now(),
   };
 }
@@ -205,8 +254,16 @@ export async function collectMetrics(): Promise<SystemMetrics> {
         currentLoad: Math.round(currentLoad.currentLoad * 10) / 10,
         cores: (currentLoad.cpus || []).map((c) => Math.round(c.load * 10) / 10),
         temperature: cpuTemp?.main ?? lastFast?.cpu.temperature,
+        speed: slowCache.cpuSpeed?.speed,
+        speedMin: slowCache.cpuSpeed?.speedMin,
+        speedMax: slowCache.cpuSpeed?.speedMax,
       }
-    : (lastFast?.cpu ?? { currentLoad: 0, cores: [], temperature: cpuTemp?.main });
+    : (lastFast?.cpu ?? {
+        currentLoad: 0,
+        cores: [],
+        temperature: cpuTemp?.main,
+        speed: slowCache.cpuSpeed?.speed,
+      });
 
   const memory = mem
     ? {
@@ -214,6 +271,11 @@ export async function collectMetrics(): Promise<SystemMetrics> {
         used: mem.used,
         free: mem.free,
         percent: Math.round((mem.used / mem.total) * 1000) / 10,
+        swapTotal: mem.swaptotal,
+        swapUsed: mem.swapused,
+        swapFree: mem.swapfree,
+        swapPercent:
+          mem.swaptotal > 0 ? Math.round((mem.swapused / mem.swaptotal) * 1000) / 10 : 0,
       }
     : (lastFast?.memory ?? { total: 0, used: 0, free: 0, percent: 0 });
 
@@ -236,9 +298,11 @@ export async function collectMetrics(): Promise<SystemMetrics> {
     memory,
     gpu: slowCache.gpu,
     disks: slowCache.disks,
+    diskIO: slowCache.diskIO,
     network,
     wifi: slowCache.wifi,
     battery: slowCache.battery,
+    fans: slowCache.fans,
     processes: slowCache.processes,
     system: slowCache.system || {
       manufacturer: '',

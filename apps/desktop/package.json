@@ -48,6 +48,14 @@
         "to": "icon.png"
       },
       {
+        "from": "resources/icon.ico",
+        "to": "icon.ico"
+      },
+      {
+        "from": "resources/tray-icon.png",
+        "to": "tray-icon.png"
+      },
+      {
         "from": "../../node_modules/koffi",
         "to": "koffi",
         "filter": [

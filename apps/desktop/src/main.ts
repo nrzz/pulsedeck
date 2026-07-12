@@ -14,8 +14,10 @@ import {
   ipcMain,
   screen,
 } from 'electron';
-import { createDesktopPinner } from './pin-desktop';
+import type { MenuItemConstructorOptions, NativeImage, Rectangle } from 'electron';
+import { createDesktopDetacher, createDesktopPinner } from './pin-desktop';
 import { clampBoundsToDisplays, loadBounds, persistWindowBounds } from './bounds';
+import { loadShellPrefs, saveShellPrefs, type ShellPrefs } from './shell-prefs';
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -24,7 +26,12 @@ let isQuitting = false;
 let locked = false;
 let serverBaseUrl = '';
 let pinToDesktop: (win: BrowserWindow) => void = () => undefined;
+let detachFromDesktop: (win: BrowserWindow) => void = () => undefined;
 let boundsTimer: ReturnType<typeof setTimeout> | null = null;
+let layerTimer: ReturnType<typeof setTimeout> | null = null;
+let shellPrefs: ShellPrefs = { alwaysOnTop: false, v: 2 };
+
+type Corner = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
 
 function getFreePort(host = '127.0.0.1'): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -51,6 +58,8 @@ function resolvePaths() {
       serverEntry: path.join(__dirname, 'server.bundle.cjs'),
       dataDir: app.getPath('userData'),
       iconPath: path.join(process.resourcesPath, 'icon.png'),
+      iconIcoPath: path.join(process.resourcesPath, 'icon.ico'),
+      trayIconPath: path.join(process.resourcesPath, 'tray-icon.png'),
       preload: path.join(__dirname, 'preload.js'),
     };
   }
@@ -59,6 +68,8 @@ function resolvePaths() {
     serverEntry: path.resolve(__dirname, '../../server/dist/server.js'),
     dataDir: app.getPath('userData'),
     iconPath: path.resolve(__dirname, '../resources/icon.png'),
+    iconIcoPath: path.resolve(__dirname, '../resources/icon.ico'),
+    trayIconPath: path.resolve(__dirname, '../resources/tray-icon.png'),
     preload: path.join(__dirname, 'preload.js'),
   };
 }
@@ -123,10 +134,33 @@ async function bootServer() {
   return started.url;
 }
 
-function loadIcon(): Electron.NativeImage {
-  const { iconPath } = resolvePaths();
+function loadIcon(): NativeImage {
+  const { iconPath, iconIcoPath } = resolvePaths();
+  if (process.platform === 'win32' && fs.existsSync(iconIcoPath)) {
+    const ico = nativeImage.createFromPath(iconIcoPath);
+    if (!ico.isEmpty()) return ico;
+  }
   if (fs.existsSync(iconPath)) {
     return nativeImage.createFromPath(iconPath);
+  }
+  return nativeImage.createEmpty();
+}
+
+function loadTrayIcon(fallback: NativeImage): NativeImage {
+  const { trayIconPath, iconIcoPath, iconPath } = resolvePaths();
+  const candidates = [trayIconPath, iconIcoPath, iconPath];
+  for (const candidate of candidates) {
+    if (!fs.existsSync(candidate)) continue;
+    const img = nativeImage.createFromPath(candidate);
+    if (img.isEmpty()) continue;
+    const size = img.getSize();
+    if (size.width > 32 || size.height > 32) {
+      return img.resize({ width: 16, height: 16, quality: 'better' });
+    }
+    return img;
+  }
+  if (!fallback.isEmpty()) {
+    return fallback.resize({ width: 16, height: 16, quality: 'better' });
   }
   return nativeImage.createEmpty();
 }
@@ -137,6 +171,34 @@ function schedulePersistBounds() {
   boundsTimer = setTimeout(() => {
     if (mainWindow) persistWindowBounds(dataDir, mainWindow);
   }, 400);
+}
+
+function applyWindowLayer(win: BrowserWindow = mainWindow!) {
+  if (!win || win.isDestroyed()) return;
+  if (shellPrefs.alwaysOnTop) {
+    detachFromDesktop(win);
+    win.setAlwaysOnTop(true, 'floating');
+    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
+  } else {
+    win.setAlwaysOnTop(false);
+    win.setVisibleOnAllWorkspaces(false);
+    pinToDesktop(win);
+  }
+}
+
+function scheduleApplyLayer(win: BrowserWindow) {
+  if (layerTimer) clearTimeout(layerTimer);
+  layerTimer = setTimeout(() => applyWindowLayer(win), 80);
+}
+
+function setAlwaysOnTopPref(enabled: boolean) {
+  shellPrefs = { ...shellPrefs, alwaysOnTop: enabled, v: 2 };
+  const { dataDir } = resolvePaths();
+  saveShellPrefs(dataDir, shellPrefs);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    applyWindowLayer(mainWindow);
+    if (mainWindow.isVisible()) mainWindow.showInactive();
+  }
 }
 
 function applyLock(next: boolean) {
@@ -151,13 +213,12 @@ function applyLock(next: boolean) {
     }
     mainWindow.webContents.send('pulsedeck:locked-changed', locked);
   }
-  rebuildTrayMenu();
 }
 
 function showBoard() {
   if (!mainWindow) return;
   mainWindow.showInactive();
-  pinToDesktop(mainWindow);
+  applyWindowLayer(mainWindow);
 }
 
 function hideBoard() {
@@ -168,6 +229,29 @@ function toggleBoard() {
   if (!mainWindow) return;
   if (mainWindow.isVisible()) hideBoard();
   else showBoard();
+}
+
+function resetBoardCorner(corner: Corner = 'top-right', size: 'compact' | 'medium' | 'wide' = 'compact') {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const display =
+    screen.getDisplayMatching(mainWindow.getBounds()) || screen.getPrimaryDisplay();
+  const wa = display.workArea;
+  const width =
+    size === 'wide' ? Math.min(1100, wa.width - 40) : size === 'medium' ? Math.min(900, wa.width - 40) : Math.min(720, wa.width - 40);
+  const height =
+    size === 'wide' ? Math.min(700, wa.height - 40) : size === 'medium' ? Math.min(600, wa.height - 40) : Math.min(520, wa.height - 40);
+  const margin = 24;
+  const x =
+    corner === 'top-left' || corner === 'bottom-left'
+      ? wa.x + margin
+      : wa.x + wa.width - width - margin;
+  const y =
+    corner === 'top-left' || corner === 'top-right'
+      ? wa.y + margin
+      : wa.y + wa.height - height - margin;
+  mainWindow.setBounds({ x, y, width, height });
+  showBoard();
+  schedulePersistBounds();
 }
 
 function isAutostartEnabled(): boolean {
@@ -181,80 +265,139 @@ function setAutostart(enabled: boolean) {
     path: process.execPath,
     args: app.isPackaged ? [] : [path.resolve(__dirname, '../../..')],
   });
-  rebuildTrayMenu();
 }
 
-function rebuildTrayMenu() {
+function openEditLayout() {
+  if (!mainWindow) return;
+  if (locked) applyLock(false);
+  showBoard();
+  mainWindow.webContents.send('pulsedeck:edit-layout');
+}
+
+function openSettingsPanel() {
+  if (!mainWindow) return;
+  if (locked) applyLock(false);
+  showBoard();
+  mainWindow.webContents.send('pulsedeck:open-settings');
+}
+
+function buildTrayMenu(): Menu {
+  const template: MenuItemConstructorOptions[] = [
+    {
+      label: mainWindow?.isVisible() ? 'Hide board' : 'Show board',
+      click: () => toggleBoard(),
+    },
+    { type: 'separator' },
+    {
+      label: 'Pinned to desktop',
+      type: 'checkbox',
+      checked: !shellPrefs.alwaysOnTop,
+      toolTip: 'Stay on the wallpaper (home screen). Apps cover the board when over it.',
+      click: (item) => setAlwaysOnTopPref(!item.checked),
+    },
+    {
+      label: 'Float over apps',
+      type: 'checkbox',
+      checked: shellPrefs.alwaysOnTop,
+      toolTip: 'Keep the board above other windows.',
+      click: (item) => setAlwaysOnTopPref(item.checked),
+    },
+    {
+      label: 'Reset position',
+      submenu: [
+        { label: 'Top right', click: () => resetBoardCorner('top-right') },
+        { label: 'Top left', click: () => resetBoardCorner('top-left') },
+        { label: 'Bottom right', click: () => resetBoardCorner('bottom-right') },
+        { label: 'Bottom left', click: () => resetBoardCorner('bottom-left') },
+      ],
+    },
+    {
+      label: 'Customize…',
+      click: () => openSettingsPanel(),
+    },
+    {
+      label: 'Edit layout',
+      click: () => openEditLayout(),
+    },
+    {
+      label: 'Add widget',
+      click: () => {
+        if (!mainWindow) return;
+        if (locked) applyLock(false);
+        showBoard();
+        mainWindow.webContents.send('pulsedeck:add-widget');
+      },
+    },
+    {
+      label: locked ? 'Unlock board' : 'Lock board (click-through)',
+      click: () => applyLock(!locked),
+    },
+    { type: 'separator' },
+    {
+      label: 'Launch at startup',
+      type: 'checkbox',
+      checked: isAutostartEnabled(),
+      click: (item) => setAutostart(item.checked),
+    },
+    {
+      label: 'Open in browser',
+      click: () => {
+        if (serverBaseUrl) void shell.openExternal(serverBaseUrl);
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit PulseDeck',
+      click: () => {
+        isQuitting = true;
+        app.quit();
+      },
+    },
+  ];
+  return Menu.buildFromTemplate(template);
+}
+
+function popupTrayMenu(bounds?: Rectangle) {
   if (!tray) return;
-  tray.setContextMenu(
-    Menu.buildFromTemplate([
-      {
-        label: mainWindow?.isVisible() ? 'Hide board' : 'Show board',
-        click: () => toggleBoard(),
-      },
-      {
-        label: 'Edit layout',
-        click: () => {
-          if (!mainWindow) return;
-          if (locked) applyLock(false);
-          showBoard();
-          mainWindow.webContents.send('pulsedeck:edit-layout');
-        },
-      },
-      {
-        label: locked ? 'Unlock board' : 'Lock board (click-through)',
-        click: () => applyLock(!locked),
-      },
-      { type: 'separator' },
-      {
-        label: 'Launch at startup',
-        type: 'checkbox',
-        checked: isAutostartEnabled(),
-        click: (item) => setAutostart(item.checked),
-      },
-      {
-        label: 'Open in browser',
-        click: () => {
-          if (serverBaseUrl) void shell.openExternal(serverBaseUrl);
-        },
-      },
-      { type: 'separator' },
-      {
-        label: 'Quit PulseDeck',
-        click: () => {
-          isQuitting = true;
-          app.quit();
-        },
-      },
-    ]),
-  );
+  // Keep board visible while using tray / overflow (^) — never hide on tray interaction
+  showBoard();
+  const menu = buildTrayMenu();
+  if (bounds) tray.popUpContextMenu(menu, bounds);
+  else tray.popUpContextMenu(menu);
+  // Re-assert desktop pin after the menu closes / taskbar focus shuffle
+  if (mainWindow) scheduleApplyLayer(mainWindow);
 }
 
-function createTray(icon: Electron.NativeImage) {
-  const trayIcon = icon.isEmpty()
-    ? nativeImage.createEmpty()
-    : icon.resize({ width: 16, height: 16 });
-  tray = new Tray(trayIcon);
-  tray.setToolTip('PulseDeck');
-  rebuildTrayMenu();
-  tray.on('double-click', () => toggleBoard());
-  tray.on('click', () => toggleBoard());
+function createTray(icon: NativeImage) {
+  const trayIcon = loadTrayIcon(icon);
+  tray = new Tray(trayIcon.isEmpty() ? icon : trayIcon);
+  tray.setToolTip('PulseDeck — click for menu');
+  tray.setContextMenu(buildTrayMenu());
+
+  tray.on('right-click', (_event, bounds) => {
+    popupTrayMenu(bounds);
+  });
+  tray.on('click', (_event, bounds) => {
+    popupTrayMenu(bounds);
+  });
+  // Show only — hide is explicit via tray menu
+  tray.on('double-click', () => {
+    showBoard();
+  });
 }
 
-function createWindow(url: string, icon: Electron.NativeImage) {
+function createWindow(url: string, icon: NativeImage) {
   const { dataDir, preload } = resolvePaths();
   const saved = loadBounds(dataDir);
   const primary = screen.getPrimaryDisplay().workArea;
   const width = Math.min(720, primary.width - 40);
   const height = Math.min(520, primary.height - 40);
   const defaults = {
-    // Top-right corner — classic widget placement
     x: primary.x + primary.width - width - 24,
     y: primary.y + 24,
     width,
     height,
   };
-  // Prefer fresh compact defaults over a legacy giant dashboard window
   const bounds =
     saved && saved.width <= 900 && saved.height <= 700 ? clampBoundsToDisplays(saved) : defaults;
 
@@ -271,6 +414,7 @@ function createWindow(url: string, icon: Electron.NativeImage) {
     resizable: true,
     maximizable: false,
     fullscreenable: false,
+    alwaysOnTop: shellPrefs.alwaysOnTop,
     title: 'PulseDeck',
     icon: icon.isEmpty() ? undefined : icon,
     autoHideMenuBar: true,
@@ -282,8 +426,6 @@ function createWindow(url: string, icon: Electron.NativeImage) {
     },
   });
 
-  // No acrylic — it paints an opaque slab. Pure transparency so wallpaper shows between cards.
-
   const widgetUrl = `${url}${url.includes('?') ? '&' : '?'}shell=widget`;
   void mainWindow.loadURL(widgetUrl);
 
@@ -292,20 +434,11 @@ function createWindow(url: string, icon: Electron.NativeImage) {
   });
 
   mainWindow.on('show', () => {
-    if (mainWindow) pinToDesktop(mainWindow);
-    rebuildTrayMenu();
+    if (mainWindow) scheduleApplyLayer(mainWindow);
   });
 
-  mainWindow.on('hide', () => rebuildTrayMenu());
-
-  mainWindow.on('focus', () => {
-    // Re-pin so the board stays under other apps after accidental focus
-    if (mainWindow) {
-      setTimeout(() => {
-        if (mainWindow && !mainWindow.isDestroyed()) pinToDesktop(mainWindow);
-      }, 50);
-    }
-  });
+  // Do NOT re-pin on every blur — that was sinking HWND_BOTTOM under wallpaper on tray clicks.
+  // Re-pin on display changes / explicit show / tray menu instead.
 
   mainWindow.on('move', schedulePersistBounds);
   mainWindow.on('resize', schedulePersistBounds);
@@ -329,6 +462,26 @@ function registerIpc() {
     applyLock(Boolean(next));
     return locked;
   });
+  ipcMain.handle('pulsedeck:get-always-on-top', () => shellPrefs.alwaysOnTop);
+  ipcMain.handle('pulsedeck:set-always-on-top', (_e, next: boolean) => {
+    setAlwaysOnTopPref(Boolean(next));
+    return shellPrefs.alwaysOnTop;
+  });
+  ipcMain.handle('pulsedeck:reset-corner', (_e, corner?: Corner, size?: 'compact' | 'medium' | 'wide') => {
+    resetBoardCorner(corner || 'top-right', size || 'compact');
+    return true;
+  });
+  ipcMain.handle('pulsedeck:list-displays', () =>
+    screen.getAllDisplays().map((d) => ({
+      id: d.id,
+      label: d.label || `Display ${d.id}`,
+      bounds: d.bounds,
+      workArea: d.workArea,
+      primary: d.id === screen.getPrimaryDisplay().id,
+    })),
+  );
+  ipcMain.on('pulsedeck:toggle-edit', () => openEditLayout());
+  ipcMain.on('pulsedeck:open-settings', () => openSettingsPanel());
 }
 
 const gotLock = app.requestSingleInstanceLock();
@@ -341,15 +494,26 @@ if (!gotLock) {
 
   app.whenReady().then(async () => {
     try {
+      const { dataDir } = resolvePaths();
+      shellPrefs = loadShellPrefs(dataDir);
       pinToDesktop = createDesktopPinner();
+      detachFromDesktop = createDesktopDetacher();
       registerIpc();
       const icon = loadIcon();
       serverBaseUrl = await bootServer();
       createTray(icon);
       createWindow(serverBaseUrl, icon);
 
-      const ok = globalShortcut.register('CommandOrControl+Alt+P', () => toggleBoard());
-      if (!ok) console.warn('[PulseDeck] failed to register Ctrl+Alt+P');
+      screen.on('display-metrics-changed', () => {
+        if (mainWindow && mainWindow.isVisible()) scheduleApplyLayer(mainWindow);
+      });
+
+      const okP = globalShortcut.register('CommandOrControl+Alt+P', () => toggleBoard());
+      const okE = globalShortcut.register('CommandOrControl+Alt+E', () => openEditLayout());
+      const okL = globalShortcut.register('CommandOrControl+Alt+L', () => applyLock(!locked));
+      if (!okP) console.warn('[PulseDeck] failed to register Ctrl+Alt+P');
+      if (!okE) console.warn('[PulseDeck] failed to register Ctrl+Alt+E');
+      if (!okL) console.warn('[PulseDeck] failed to register Ctrl+Alt+L');
     } catch (err) {
       console.error(err);
       dialog.showErrorBox(

@@ -3,6 +3,7 @@ import type {
   AppConfig,
   CryptoQuote,
   LayoutItem,
+  NewsItem,
   PingResult,
   StockQuote,
   SystemMetrics,
@@ -12,6 +13,21 @@ import type {
 import { createDefaultConfig } from '@pulsedeck/shared';
 import { hexToRgb } from '../lib/utils';
 
+export interface ExchangeRate {
+  pair: string;
+  rate: number;
+}
+
+export interface HeadlineData {
+  title: string;
+  link?: string;
+}
+
+export interface AqiData {
+  value: number;
+  city?: string;
+}
+
 interface DashboardState {
   connected: boolean;
   config: AppConfig;
@@ -20,6 +36,11 @@ interface DashboardState {
   crypto: CryptoQuote[];
   stocks: StockQuote[];
   weather: WeatherData | null;
+  exchange: ExchangeRate[] | null;
+  headline: HeadlineData | null;
+  aqi: AqiData | null;
+  /** Per-widget news trays — pruned on remove to keep memory tiny */
+  newsByWidgetId: Record<string, NewsItem[]>;
   editMode: boolean;
   settingsOpen: boolean;
   addWidgetOpen: boolean;
@@ -36,6 +57,10 @@ interface DashboardState {
   setCrypto: (c: CryptoQuote[]) => void;
   setStocks: (s: StockQuote[]) => void;
   setWeather: (w: WeatherData | null) => void;
+  setExchange: (rates: ExchangeRate[] | null) => void;
+  setHeadline: (headline: HeadlineData | null) => void;
+  setAqi: (aqi: AqiData | null) => void;
+  setNewsForWidget: (id: string, items: NewsItem[]) => void;
   setEditMode: (v: boolean) => void;
   setSettingsOpen: (v: boolean) => void;
   setAddWidgetOpen: (v: boolean) => void;
@@ -47,7 +72,8 @@ interface DashboardState {
   getActivePreset: () => AppConfig['presets'][0];
 }
 
-const HISTORY_LEN = 60;
+/** Keep sparkline history short — major RAM win vs longer rings */
+const HISTORY_LEN = 16;
 
 function pushHistory<T extends { t: number }>(arr: T[], item: T): T[] {
   const next = [...arr, item];
@@ -62,6 +88,10 @@ export const useDashboard = create<DashboardState>((set, get) => ({
   crypto: [],
   stocks: [],
   weather: null,
+  exchange: null,
+  headline: null,
+  aqi: null,
+  newsByWidgetId: {},
   editMode: false,
   settingsOpen: false,
   addWidgetOpen: false,
@@ -97,6 +127,16 @@ export const useDashboard = create<DashboardState>((set, get) => ({
   setCrypto: (crypto) => set({ crypto }),
   setStocks: (stocks) => set({ stocks }),
   setWeather: (weather) => set({ weather }),
+  setExchange: (exchange) => set({ exchange }),
+  setHeadline: (headline) => set({ headline }),
+  setAqi: (aqi) => set({ aqi }),
+  setNewsForWidget: (id, items) =>
+    set((state) => ({
+      newsByWidgetId: {
+        ...state.newsByWidgetId,
+        [id]: items.slice(0, 12),
+      },
+    })),
   setEditMode: (editMode) => set({ editMode }),
   setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
   setAddWidgetOpen: (addWidgetOpen) => set({ addWidgetOpen }),
@@ -138,7 +178,8 @@ export const useDashboard = create<DashboardState>((set, get) => ({
           layout: p.layout.filter((l) => l.i !== id),
         };
       });
-      return { config: { ...state.config, presets } };
+      const { [id]: _removed, ...restNews } = state.newsByWidgetId;
+      return { config: { ...state.config, presets }, newsByWidgetId: restNews };
     }),
 
   addWidget: (widget, layoutItem) =>
@@ -161,5 +202,13 @@ export const useDashboard = create<DashboardState>((set, get) => ({
     root.style.setProperty('--accent', hexToRgb(theme.accent));
     root.style.setProperty('--card-opacity', String(theme.cardOpacity));
     root.style.setProperty('--board-opacity', String(shell?.boardOpacity ?? 0.92));
+    root.style.setProperty('--board-scale', String(shell?.scale ?? 1));
+    const radius =
+      theme.cornerRadius === 'sharp' ? '6px' : theme.cornerRadius === 'round' ? '20px' : '14px';
+    root.style.setProperty('--card-radius', radius);
+    const fs = theme.fontSize === 's' ? '13px' : theme.fontSize === 'l' ? '16px' : '14px';
+    root.style.setProperty('--ui-font-size', fs);
+    root.classList.toggle('reduce-motion', Boolean(theme.reduceMotion));
+    root.classList.toggle('hide-widget-titles', theme.showWidgetTitles === false);
   },
 }));

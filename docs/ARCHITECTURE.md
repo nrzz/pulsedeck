@@ -36,29 +36,33 @@ flowchart LR
   Fastify --> Disk[config.json]
 ```
 
-1. **Collectors** (`apps/server/src/collectors/`) poll CPU/RAM/GPU/disks/network and fetch crypto/stocks/weather/ping.
-2. **WebSocket** pushes `metrics`, `ping`, `crypto`, `stocks`, `weather`, `config` messages.
-3. **Zustand** (`apps/web/src/store/dashboard.ts`) holds live state + layout presets.
-4. **Widgets** subscribe to slices; layout edits call `persistConfig` → `PUT /api/config`.
+1. **Collectors** (`apps/server/src/collectors/`) poll CPU/RAM/GPU/disks/network and fetch crypto/stocks/weather/news/ping.
+2. **Demand gates** — expensive `disksIO` / `cpuCurrentSpeed` only run when related widgets are on the active preset; news RSS is cached (~12 min) and returns titles/links only.
+3. **WebSocket** pushes `metrics`, `ping`, `crypto`, `stocks`, `weather`, `config` messages (news/exchange/AQI often REST-bootstrap on the client).
+4. **Zustand** (`apps/web/src/store/dashboard.ts`) holds live state + layout presets; news is keyed per widget id and pruned on remove.
+5. **Widgets** subscribe to slices; layout edits call `persistConfig` → `PUT /api/config`.
 
 ## Widget plugin model
 
-- Catalog: `WIDGET_CATALOG` in shared (docs + Add-widget modal metadata).
+- Catalog: `WIDGET_CATALOG` in shared (~47 types; docs + Add-widget modal metadata).
+- Layout packs: `createNamedPresets()` (Minimal, System, Network, Finance, Focus, Full monitor).
 - Runtime registry: `widgetRegistry` maps `type` → React component + default size/settings.
-- Layout: `react-grid-layout` (12 cols). **Never animate `transform` on grid items** — RGL positions via transform.
+- Layout: `react-grid-layout` (8/12/16 cols via shell). **Never animate `transform` on grid items** — RGL positions via transform.
+- Charts: **SVG sparklines only** (no recharts).
 
 See [CREATING_WIDGETS.md](CREATING_WIDGETS.md) and [WIDGETS.md](WIDGETS.md).
 
 ## Desktop shell
 
-`apps/desktop/src/main.ts`:
+`apps/desktop/src/main.ts` + `pin-desktop.ts`:
 
 - Frameless, transparent, `skipTaskbar`
-- Preload bridge (`window.pulsedeck`) for lock / edit IPC
-- Pin to desktop via Win32 `SetWindowPos(HWND_BOTTOM)` (`koffi`)
-- Tray: show/hide, edit, lock (click-through), autostart, quit
-- Hotkey: **Ctrl+Alt+P**
-- Widget UI: transparent stage, hover-only toolbar, compact `desktop` preset
+- Preload bridge (`window.pulsedeck`) for lock / edit / settings / float / corner IPC
+- **WorkerW** wallpaper attach (`Progman` `0x052C` → `SHELLDLL_DefView` → `SetParent`); fallback `HWND_BOTTOM`
+- Tray click/right-click: **menu only** + show — never hide on tray interaction
+- Hotkeys: **Ctrl+Alt+P** / **E** / **L**
+- Default: pinned to desktop; optional float-over-apps
+- Widget UI: transparent stage, always-visible Customize/Presets toolbar, compact `desktop` preset
 
 ## Packaging
 
@@ -74,4 +78,5 @@ Tag `v*` triggers `.github/workflows/release.yml` on Windows to attach the insta
 
 - Server binds **localhost only**.
 - No secrets in the repo; optional Finnhub key lives in user config.
+- News/clipboard stay local to the machine (clipboard history is never uploaded).
 - Report vulnerabilities per [SECURITY.md](../SECURITY.md).

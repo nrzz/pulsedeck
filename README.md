@@ -27,7 +27,9 @@ Live CPU, RAM, GPU, disks, network, crypto, stocks, weather, and more in a beaut
 4. Launch **PulseDeck** from the Start menu or desktop shortcut
 5. The floating widget board opens on your desktop (wallpaper shows between cards)
 
-**That’s it.** Closing the board hides to the system tray. **Ctrl+Alt+P** toggles visibility. Right-click the tray icon → **Quit** to fully exit.
+**That’s it.** Closing the board hides to the system tray. **Ctrl+Alt+P** toggles visibility. Tray click opens the menu (board stays pinned). Right-click the tray → **Quit** to fully exit.
+
+The board pins to your **desktop wallpaper** by default (behind apps). Use tray → **Float over apps** only if you want it on top.
 
 Full install help: [docs/INSTALL.md](docs/INSTALL.md)
 
@@ -43,16 +45,17 @@ apps/desktop/release/PulseDeck-Setup-1.0.0.exe
 
 ## Features
 
-| Area                | What you get                                                                |
-| ------------------- | --------------------------------------------------------------------------- |
-| **Desktop widgets** | Frameless floating glass cards over wallpaper — not a browser chrome window |
-| **Tray + hotkey**   | Show/hide with **Ctrl+Alt+P**, lock (click-through), launch at startup      |
-| **Widget grid**     | Drag, resize, add/remove cards in Edit mode                                 |
-| **System**          | CPU (per-core), RAM, GPU, disks, top processes, battery, uptime             |
-| **Network**         | Live up/down speeds, Wi‑Fi, IPs, ping monitor, data usage                   |
-| **Finance**         | Crypto (CoinGecko) and stocks (Yahoo / optional Finnhub key)                |
-| **Extras**          | World clocks, weather, notes, quick links                                   |
-| **Customization**   | Themes, accents, density, layout presets, export/import JSON                |
+| Area                | What you get                                                                                          |
+| ------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Desktop pin**     | Board attaches to the wallpaper layer (WorkerW) — apps cover it; tray `^` no longer hides the board   |
+| **Tray + hotkeys**  | Menu on click/right-click; **Ctrl+Alt+P** show/hide, **E** edit, **L** lock; optional float-over-apps |
+| **Widget grid**     | Drag, resize, add/remove; search + category Add modal; layout packs (Minimal → Full monitor)          |
+| **System**          | CPU, RAM, GPU, disks, I/O, temps, swap, freq, processes, sensors, alerts, battery, uptime             |
+| **Network**         | Speeds, Wi‑Fi, IPs, ping, adapters, graph, ports, data usage / bandwidth cap                          |
+| **Finance**         | Crypto, stocks, FX exchange, market strip, local portfolio                                            |
+| **Extras**          | Clocks, weather (Bangalore default), AQI, news tray, calendar, todo, timer, notes, launcher, …        |
+| **News tray**       | Topic chips + suggestion packs + custom RSS; titles/links only (low memory)                           |
+| **Customization**   | Themes, accents, density, scale, grid cols, news defaults, export/import JSON                         |
 
 ---
 
@@ -138,16 +141,19 @@ flowchart LR
 
 ## Widget catalog
 
-| Category | Widgets                                                  |
-| -------- | -------------------------------------------------------- |
-| System   | CPU, Memory, GPU, Disks, Processes, Battery, System Info |
-| Network  | Network Speed, Wi‑Fi, IPs, Ping, Data Usage              |
-| Finance  | Crypto, Stocks                                           |
-| Extras   | Clocks, Weather, Notes, Quick Links                      |
+~**47** built-in types. Highlights:
+
+| Category | Widgets                                                                 |
+| -------- | ----------------------------------------------------------------------- |
+| System   | CPU, RAM, GPU, Disks, Disk I/O, Temps, Swap, Fans, Processes, Alerts, … |
+| Network  | Speed, Wi‑Fi, IPs, Ping, Adapters, Net graph, Ports, Data usage         |
+| Finance  | Crypto, Stocks, Exchange, Market strip, Portfolio                       |
+| Extras   | Clocks, Weather, AQI, **News tray**, Calendar, Todo, Timer, Notes, …    |
 
 - Full reference (settings, data sources, sizes): [docs/WIDGETS.md](docs/WIDGETS.md)
 - Add your own (SOP): [docs/CREATING_WIDGETS.md](docs/CREATING_WIDGETS.md)
 - Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- Install from Releases or git: [docs/INSTALL.md](docs/INSTALL.md)
 
 ---
 
@@ -165,6 +171,7 @@ flowchart LR
 | `npm run test:e2e`        | Playwright UI smoke tests                          |
 | `npm run test:e2e:dnd`    | Drag / resize E2E                                  |
 | `npm run test:e2e:widget` | Widget-shell E2E                                   |
+| `npm run test:e2e:full`   | Full catalog + tray/WorkerW contracts + APIs       |
 
 ---
 

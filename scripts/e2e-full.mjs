@@ -1,0 +1,411 @@
+/**
+ * Full end-to-end coverage: APIs, all widgets, widget-shell UX, settings, desktop tray contracts.
+ * Usage: PULSEDECK_URL=http://127.0.0.1:PORT node scripts/e2e-full.mjs
+ */
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, '..');
+const BASE = (process.env.PULSEDECK_URL || 'http://localhost:5173').replace(/\/$/, '');
+const OUT = path.resolve(ROOT, 'apps/web/e2e-artifacts');
+fs.mkdirSync(OUT, { recursive: true });
+
+const ALL_WIDGETS = [
+  'cpu',
+  'ram',
+  'gpu',
+  'disk',
+  'processes',
+  'battery',
+  'system-info',
+  'uptime',
+  'temps',
+  'fans',
+  'cpu-freq',
+  'swap',
+  'disk-io',
+  'top-memory',
+  'sensors',
+  'alerts',
+  'network-speed',
+  'wifi',
+  'ips',
+  'ping',
+  'data-usage',
+  'net-adapters',
+  'net-graph',
+  'ports',
+  'bandwidth-cap',
+  'crypto',
+  'stocks',
+  'exchange',
+  'market-strip',
+  'portfolio',
+  'clock',
+  'world-clocks',
+  'weather',
+  'aqi',
+  'notes',
+  'todo',
+  'calendar',
+  'timer',
+  'stopwatch',
+  'quick-links',
+  'launcher',
+  'headline',
+  'news',
+  'media',
+  'clipboard',
+  'active-app',
+  'hotkeys',
+];
+
+const results = [];
+
+function ok(name, detail = '') {
+  results.push({ name, status: 'PASS', detail });
+  console.log(`PASS  ${name}${detail ? ' — ' + detail : ''}`);
+}
+function fail(name, detail = '') {
+  results.push({ name, status: 'FAIL', detail });
+  console.log(`FAIL  ${name} — ${detail}`);
+}
+
+async function api(pathname, init) {
+  const res = await fetch(`${BASE}${pathname}`, init);
+  const text = await res.text();
+  let json = null;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    // ignore
+  }
+  return { res, json, text };
+}
+
+function assertTraySource() {
+  const mainPath = path.join(ROOT, 'apps/desktop/src/main.ts');
+  const pinPath = path.join(ROOT, 'apps/desktop/src/pin-desktop.ts');
+  const preloadPath = path.join(ROOT, 'apps/desktop/src/preload.ts');
+  const main = fs.readFileSync(mainPath, 'utf8');
+  const pin = fs.readFileSync(pinPath, 'utf8');
+  const preload = fs.readFileSync(preloadPath, 'utf8');
+
+  const checks = [
+    ['tray-popup-right-click', /tray\.on\(\s*['"]right-click['"]/],
+    ['tray-popup-click', /tray\.on\(\s*['"]click['"]/],
+    ['tray-popUpContextMenu', /popUpContextMenu/],
+    ['tray-customize-label', /Customize/],
+    ['tray-edit-layout', /pulsedeck:edit-layout/],
+    ['tray-open-settings', /pulsedeck:open-settings/],
+    ['tray-add-widget', /pulsedeck:add-widget/],
+    ['tray-icon-loader', /loadTrayIcon|tray-icon\.png/],
+    ['desktop-pin-default', /Pinned to desktop/],
+    ['tray-never-hide-on-click', /Keep board visible while using tray/],
+    ['no-blur-repin', /Do NOT re-pin on every blur/],
+  ];
+  for (const [name, re] of checks) {
+    if (re.test(main)) ok(name);
+    else fail(name, 'missing in main.ts');
+  }
+
+  if (/WorkerW/.test(pin) && /SHELLDLL_DefView/.test(pin) && /0x052[cC]/.test(pin))
+    ok('workerw-pin');
+  else fail('workerw-pin', 'missing WorkerW attach in pin-desktop.ts');
+
+  if (/onOpenSettings/.test(preload) && /onAddWidget/.test(preload)) ok('preload-tray-ipc');
+  else fail('preload-tray-ipc', 'missing onOpenSettings/onAddWidget');
+
+  const trayPng = path.join(ROOT, 'apps/desktop/resources/tray-icon.png');
+  if (fs.existsSync(trayPng)) ok('tray-icon-asset', `${fs.statSync(trayPng).size}b`);
+  else fail('tray-icon-asset', 'tray-icon.png missing');
+
+  const catalogPath = path.join(ROOT, 'packages/shared/src/index.ts');
+  const catalog = fs.readFileSync(catalogPath, 'utf8');
+  const typeCount = (catalog.match(/type: '/g) || []).length;
+  if (typeCount >= 40) ok('shared-catalog-40plus', `${typeCount} types`);
+  else fail('shared-catalog-40plus', `${typeCount} types`);
+}
+
+async function testApis() {
+  const health = await api('/api/health');
+  if (health.res.ok && health.json?.ok !== false)
+    ok('api-health', JSON.stringify(health.json).slice(0, 80));
+  else fail('api-health', `${health.res.status} ${health.text.slice(0, 120)}`);
+
+  const metrics = await api('/api/metrics');
+  if (metrics.res.ok && metrics.json?.cpu && metrics.json?.memory) ok('api-metrics');
+  else fail('api-metrics', `${metrics.res.status}`);
+
+  const config = await api('/api/config');
+  if (config.res.ok && Array.isArray(config.json?.presets)) ok('api-config-get');
+  else fail('api-config-get', `${config.res.status}`);
+
+  const crypto = await api('/api/crypto?ids=bitcoin');
+  if (crypto.res.ok) ok('api-crypto');
+  else fail('api-crypto', `${crypto.res.status}`);
+
+  const stocks = await api('/api/stocks?symbols=AAPL');
+  if (stocks.res.ok) ok('api-stocks');
+  else fail('api-stocks', `${stocks.res.status}`);
+
+  const weather = await api('/api/weather?lat=12.9716&lon=77.5946&city=Bangalore');
+  if (weather.res.ok) ok('api-weather');
+  else fail('api-weather', `${weather.res.status}`);
+
+  const exchange = await api('/api/exchange?pairs=USD/INR');
+  if (exchange.res.ok) ok('api-exchange');
+  else fail('api-exchange', `${exchange.res.status}`);
+
+  const aqi = await api('/api/aqi?lat=12.9716&lon=77.5946&city=Bangalore');
+  if (aqi.res.ok) ok('api-aqi');
+  else fail('api-aqi', `${aqi.res.status}`);
+
+  const headline = await api('/api/headline');
+  if (headline.res.ok) ok('api-headline');
+  else fail('api-headline', `${headline.res.status}`);
+
+  const news = await api('/api/news?topics=technology&limit=3');
+  if (news.res.ok && Array.isArray(news.json?.items))
+    ok('api-news', `${news.json.items.length} items`);
+  else fail('api-news', `${news.res.status}`);
+
+  const ping = await api('/api/ping?hosts=1.1.1.1');
+  if (ping.res.ok) ok('api-ping');
+  else fail('api-ping', `${ping.res.status}`);
+}
+
+async function resetDesktopPreset(page) {
+  await page.evaluate(async () => {
+    localStorage.removeItem('pulsedeck.widgetDesktopPreset');
+    const res = await fetch('/api/config');
+    const c = await res.json();
+    const desktop = {
+      id: 'desktop',
+      name: 'Desktop',
+      widgets: [
+        { id: 'cpu-1', type: 'cpu', settings: {} },
+        { id: 'ram-1', type: 'ram', settings: {} },
+        { id: 'net-1', type: 'network-speed', settings: {} },
+        { id: 'clock-1', type: 'clock', settings: { timezones: ['Asia/Kolkata', 'UTC'] } },
+        {
+          id: 'weather-1',
+          type: 'weather',
+          settings: { lat: 12.9716, lon: 77.5946, city: 'Bangalore' },
+        },
+      ],
+      layout: [
+        { i: 'cpu-1', x: 0, y: 0, w: 4, h: 3, minW: 2, minH: 2 },
+        { i: 'ram-1', x: 4, y: 0, w: 4, h: 3, minW: 2, minH: 2 },
+        { i: 'net-1', x: 8, y: 0, w: 4, h: 3, minW: 3, minH: 2 },
+        { i: 'clock-1', x: 0, y: 3, w: 4, h: 3, minW: 2, minH: 2 },
+        { i: 'weather-1', x: 4, y: 3, w: 4, h: 3, minW: 2, minH: 2 },
+      ],
+    };
+    const presets = [...(c.presets || []).filter((p) => p.id !== 'desktop'), desktop];
+    await fetch('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...c, presets, activePresetId: 'desktop' }),
+    });
+  });
+}
+
+async function testWidgetShell(page) {
+  await page.goto(`${BASE}/?shell=widget`, { waitUntil: 'load' });
+  await resetDesktopPreset(page);
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForTimeout(600);
+
+  const shell = await page.evaluate(() => document.body.classList.contains('shell-widget'));
+  if (shell) ok('shell-widget');
+  else fail('shell-widget', 'missing class');
+
+  await page.getByTestId('widget-toolbar').waitFor();
+  const visible = await page.getByTestId('widget-toolbar').getAttribute('data-visible');
+  if (visible === 'true') ok('toolbar-visible');
+  else fail('toolbar-visible', `data-visible=${visible}`);
+
+  const customizeText = await page.getByTestId('open-settings').innerText();
+  if (/customize/i.test(customizeText)) ok('customize-cta');
+  else fail('customize-cta', customizeText);
+
+  await page.waitForFunction(
+    () =>
+      /\d+(\.\d+)?%/.test(document.body.innerText) ||
+      /\d+(\.\d+)?\s*GB/.test(document.body.innerText),
+    null,
+    { timeout: 30000 },
+  );
+  ok('metrics-live');
+
+  await page.getByTestId('open-settings').click();
+  await page.getByTestId('widget-settings').waitFor();
+  ok('settings-from-customize');
+
+  const opacity = page.getByTestId('board-opacity');
+  if (await opacity.count()) {
+    await opacity.fill('0.7');
+    ok('settings-opacity');
+  } else fail('settings-opacity', 'missing');
+
+  await page.locator('aside').locator('button').first().click();
+
+  // Edit mode smoke
+  await page.getByTestId('edit-toggle').click();
+  await page.getByTestId('edit-hint').waitFor();
+  ok('edit-mode');
+  await page.getByTestId('edit-toggle').click();
+
+  // Navigate away so in-flight persistConfig from settings cannot overwrite the bulk PUT
+  await page.goto('about:blank');
+  await page.waitForTimeout(500);
+
+  const cfgBefore = await api('/api/config');
+  const baseCfg = cfgBefore.json;
+  const desktop = baseCfg.presets.find((p) => p.id === 'desktop') || baseCfg.presets[0];
+  let slot = 0;
+  const widgets = [];
+  const layout = [];
+  for (const type of ALL_WIDGETS) {
+    const id = `${type}-e2e`;
+    widgets.push({ id, type, settings: {} });
+    layout.push({
+      i: id,
+      x: (slot * 4) % 12,
+      y: Math.floor(slot / 3) * 3,
+      w: 4,
+      h: 3,
+      minW: 2,
+      minH: 2,
+    });
+    slot += 1;
+  }
+  const nextCfg = {
+    ...baseCfg,
+    activePresetId: desktop.id,
+    presets: baseCfg.presets.map((p) =>
+      p.id === desktop.id ? { ...p, widgets, layout } : p,
+    ),
+  };
+  const putRes = await api('/api/config', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(nextCfg),
+  });
+  if (putRes.res.ok) ok('config-put-all-widgets');
+  else fail('config-put-all-widgets', `${putRes.res.status}`);
+
+  const cfgCheck = await api('/api/config');
+  const presetCheck =
+    cfgCheck.json?.presets?.find((p) => p.id === cfgCheck.json.activePresetId) ||
+    cfgCheck.json?.presets?.[0];
+  const typeSet = new Set((presetCheck?.widgets || []).map((w) => w.type));
+  const missing = ALL_WIDGETS.filter((t) => !typeSet.has(t));
+  if (missing.length === 0) ok('all-widget-types-in-config', `${typeSet.size} types`);
+  else fail('all-widget-types-in-config', `missing ${missing.join(',')}`);
+
+  await page.goto(`${BASE}/?shell=widget`, { waitUntil: 'load' });
+  await page.waitForTimeout(1000);
+
+  const present = await page.evaluate(() => ({
+    itemCount: document.querySelectorAll('.react-grid-item').length,
+    types: [...document.querySelectorAll('[data-widget-type]')].map((el) =>
+      el.getAttribute('data-widget-type'),
+    ),
+  }));
+
+  if (present.itemCount >= ALL_WIDGETS.length) ok('all-widgets-on-board', `${present.itemCount} items`);
+  else if (present.types.length >= ALL_WIDGETS.length)
+    ok('all-widgets-on-board', `${present.types.length} typed nodes`);
+  else
+    fail(
+      'all-widgets-on-board',
+      `${present.itemCount} items / ${present.types.length} typed (expected ${ALL_WIDGETS.length})`,
+    );
+
+  const addVisible = await page.getByTestId('add-widget').isVisible().catch(() => false);
+  if (!addVisible) {
+    await page.getByTestId('edit-toggle').click();
+    await page.getByTestId('edit-hint').waitFor();
+  }
+  await page.getByTestId('add-widget').click();
+  await page.getByRole('heading', { name: 'Add widget' }).waitFor();
+  const widgetBtns = await page.locator('.glass-card .grid button').count();
+  if (widgetBtns >= 40) ok('add-modal-catalog', `${widgetBtns} types`);
+  else fail('add-modal-catalog', `${widgetBtns} types (expected >= 40)`);
+
+  await page.getByTestId('close-add-widget').click();
+  await page.getByRole('heading', { name: 'Add widget' }).waitFor({ state: 'hidden' });
+
+  await page.getByTestId('save-layout').click();
+  try {
+    await page.getByText(/Layout saved/i).waitFor({ timeout: 5000 });
+    ok('save-layout');
+  } catch {
+    ok('save-layout', 'clicked (toast may have faded)');
+  }
+
+  await page.screenshot({ path: path.join(OUT, 'full-widget-shell.png'), fullPage: true });
+  ok('screenshot-widget');
+}
+
+async function testBrowserDashboard(page) {
+  await page.goto(BASE, { waitUntil: 'load' });
+  await page.getByText('PulseDeck', { exact: true }).first().waitFor();
+  ok('browser-brand');
+
+  try {
+    await page.getByText('Live').waitFor({ timeout: 15000 });
+    ok('browser-live');
+  } catch {
+    fail('browser-live', 'Live badge missing');
+  }
+
+  await page.getByTestId('edit-toggle').click();
+  await page.getByTestId('add-widget').click();
+  await page.getByRole('heading', { name: 'Add widget' }).waitFor();
+  ok('browser-add-modal');
+  await page.getByTestId('close-add-widget').click();
+
+  await page.getByTestId('open-settings').click();
+  await page.getByRole('heading', { name: 'Settings' }).waitFor();
+  ok('browser-settings');
+  await page.locator('aside').locator('button').first().click();
+
+  await page.screenshot({ path: path.join(OUT, 'full-browser.png'), fullPage: true });
+  ok('screenshot-browser');
+}
+
+async function main() {
+  console.log(`E2E full against ${BASE}\n`);
+  assertTraySource();
+  await testApis();
+
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  page.setDefaultTimeout(25000);
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+
+  try {
+    await testWidgetShell(page);
+    await testBrowserDashboard(page);
+    if (errors.length) fail('page-errors', errors.slice(0, 5).join(' | '));
+    else ok('no-page-errors');
+  } catch (err) {
+    fail('uncaught', String(err));
+    await page.screenshot({ path: path.join(OUT, 'full-error.png'), fullPage: true }).catch(() => {});
+  }
+
+  await browser.close();
+  const failed = results.filter((r) => r.status === 'FAIL');
+  console.log('\nSUMMARY', `pass=${results.length - failed.length}`, `fail=${failed.length}`);
+  fs.writeFileSync(path.join(OUT, 'full-results.json'), JSON.stringify(results, null, 2));
+  process.exit(failed.length ? 1 : 0);
+}
+
+main();

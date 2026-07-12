@@ -1,4 +1,5 @@
-import type { CryptoQuote, StockQuote, WeatherData } from '@pulsedeck/shared';
+import type { CryptoQuote, NewsFeedResult, NewsItem, StockQuote, WeatherData } from '@pulsedeck/shared';
+import { NEWS_TOPICS } from '@pulsedeck/shared';
 
 export async function fetchCrypto(ids: string[]): Promise<CryptoQuote[]> {
   if (!ids.length) return [];
@@ -25,7 +26,7 @@ export async function fetchCrypto(ids: string[]): Promise<CryptoQuote[]> {
       name: c.name,
       price: c.current_price,
       change24h: Math.round((c.price_change_percentage_24h || 0) * 100) / 100,
-      sparkline: (c.sparkline_in_7d?.price || []).slice(-48),
+      sparkline: (c.sparkline_in_7d?.price || []).slice(-24),
       image: c.image,
     }));
   } catch {
@@ -151,4 +152,194 @@ export async function fetchWeather(
   } catch {
     return null;
   }
+}
+
+export async function fetchExchange(
+  pairs: string[],
+): Promise<{ pair: string; rate: number }[]> {
+  const out: { pair: string; rate: number }[] = [];
+  for (const pair of pairs.slice(0, 6)) {
+    const [base, quote] = pair.split('/').map((s) => s.trim().toUpperCase());
+    if (!base || !quote) continue;
+    try {
+      const res = await fetch(
+        `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}&to=${encodeURIComponent(quote)}`,
+        { signal: AbortSignal.timeout(8000) },
+      );
+      if (!res.ok) continue;
+      const data = (await res.json()) as { rates?: Record<string, number> };
+      const rate = data.rates?.[quote];
+      if (typeof rate === 'number') out.push({ pair: `${base}/${quote}`, rate });
+    } catch {
+      // skip
+    }
+  }
+  return out;
+}
+
+export async function fetchAqi(
+  lat: number,
+  lon: number,
+  city?: string,
+): Promise<{ value: number; city?: string } | null> {
+  try {
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { current?: { us_aqi?: number } };
+    const value = data.current?.us_aqi;
+    if (value == null) return null;
+    return { value, city };
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchHeadline(
+  feedUrl: string,
+): Promise<{ title: string; link?: string } | null> {
+  try {
+    const res = await fetch(feedUrl, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return null;
+    const text = await res.text();
+    const title =
+      text.match(/<item>[\s\S]*?<title><!\[CDATA\[(.*?)\]\]><\/title>/i)?.[1] ||
+      text.match(/<item>[\s\S]*?<title>(.*?)<\/title>/i)?.[1] ||
+      text.match(/<entry>[\s\S]*?<title[^>]*>(.*?)<\/title>/i)?.[1];
+    const link =
+      text.match(/<item>[\s\S]*?<link>(.*?)<\/link>/i)?.[1] ||
+      text.match(/<entry>[\s\S]*?<link[^>]+href="([^"]+)"/i)?.[1];
+    if (!title) return null;
+    return { title: title.replace(/<[^>]+>/g, '').trim(), link };
+  } catch {
+    return null;
+  }
+}
+
+const newsCache = new Map<string, { at: number; items: NewsItem[] }>();
+const NEWS_CACHE_TTL = 12 * 60 * 1000;
+const TITLE_MAX = 140;
+
+function cleanText(s: string): string {
+  return s
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+}
+
+function truncateTitle(s: string): string {
+  if (s.length <= TITLE_MAX) return s;
+  return `${s.slice(0, TITLE_MAX - 1).trim()}…`;
+}
+
+function parseFeedItems(xml: string, source: string, topic: string, perFeed: number): NewsItem[] {
+  const items: NewsItem[] = [];
+  const blocks = xml.match(/<item[\s>][\s\S]*?<\/item>|<entry[\s>][\s\S]*?<\/entry>/gi) || [];
+  for (const block of blocks) {
+    if (items.length >= perFeed) break;
+    const rawTitle =
+      block.match(/<title[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i)?.[1] ||
+      block.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1];
+    if (!rawTitle) continue;
+    const title = truncateTitle(cleanText(rawTitle));
+    if (!title) continue;
+    const link =
+      block.match(/<link[^>]*href=["']([^"']+)["']/i)?.[1] ||
+      block.match(/<link>([^<]+)<\/link>/i)?.[1] ||
+      block.match(/<guid[^>]*>([^<]+)<\/guid>/i)?.[1];
+    const published =
+      block.match(/<pubDate>([^<]+)<\/pubDate>/i)?.[1] ||
+      block.match(/<updated>([^<]+)<\/updated>/i)?.[1] ||
+      block.match(/<published>([^<]+)<\/published>/i)?.[1];
+    items.push({
+      title,
+      link: link ? cleanText(link) : undefined,
+      source,
+      published: published ? cleanText(published).slice(0, 40) : undefined,
+      topic,
+    });
+  }
+  return items;
+}
+
+async function fetchOneFeed(
+  url: string,
+  source: string,
+  topic: string,
+  perFeed: number,
+): Promise<NewsItem[]> {
+  const cached = newsCache.get(url);
+  if (cached && Date.now() - cached.at < NEWS_CACHE_TTL) {
+    return cached.items.slice(0, perFeed);
+  }
+  try {
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(8000),
+      headers: { Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml' },
+    });
+    if (!res.ok) return cached?.items.slice(0, perFeed) ?? [];
+    // Cap download size in memory — only need early items
+    const text = (await res.text()).slice(0, 180_000);
+    const items = parseFeedItems(text, source, topic, perFeed);
+    newsCache.set(url, { at: Date.now(), items });
+    // Bound cache entries
+    if (newsCache.size > 24) {
+      const oldest = [...newsCache.entries()].sort((a, b) => a[1].at - b[1].at)[0];
+      if (oldest) newsCache.delete(oldest[0]);
+    }
+    return items;
+  } catch {
+    return cached?.items.slice(0, perFeed) ?? [];
+  }
+}
+
+export async function fetchNews(options: {
+  topics?: string[];
+  feeds?: string[];
+  limit?: number;
+}): Promise<NewsFeedResult> {
+  const limit = Math.min(12, Math.max(3, options.limit ?? 5));
+  const topicIds = (options.topics?.length ? options.topics : ['technology', 'world']).slice(0, 5);
+  const customFeeds = (options.feeds || []).filter(Boolean).slice(0, 2);
+
+  const jobs: Promise<NewsItem[]>[] = [];
+  for (const id of topicIds) {
+    const meta = NEWS_TOPICS.find((t) => t.id === id);
+    if (!meta) continue;
+    const perFeed = Math.max(2, Math.ceil(limit / Math.max(1, topicIds.length)));
+    jobs.push(fetchOneFeed(meta.feed, meta.label, meta.id, perFeed));
+  }
+  for (let i = 0; i < customFeeds.length; i++) {
+    jobs.push(fetchOneFeed(customFeeds[i], `Custom ${i + 1}`, `custom-${i}`, 3));
+  }
+
+  const batches = await Promise.all(jobs);
+  const seen = new Set<string>();
+  const merged: NewsItem[] = [];
+  // Round-robin so topics stay mixed without large sorts
+  let idx = 0;
+  while (merged.length < limit) {
+    let added = false;
+    for (const batch of batches) {
+      if (idx < batch.length) {
+        const item = batch[idx];
+        const key = (item.link || item.title).toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          merged.push(item);
+          added = true;
+          if (merged.length >= limit) break;
+        }
+      }
+    }
+    if (!added) break;
+    idx += 1;
+  }
+
+  return { items: merged, fetchedAt: Date.now() };
 }

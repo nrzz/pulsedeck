@@ -2,7 +2,13 @@ import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const BASE = process.env.PULSEDECK_URL || 'http://localhost:5173/?shell=widget';
+const RAW_BASE = process.env.PULSEDECK_URL || 'http://localhost:5173';
+const BASE_URL = (() => {
+  const u = new URL(RAW_BASE.includes('://') ? RAW_BASE : `http://${RAW_BASE}`);
+  u.searchParams.set('shell', 'widget');
+  return u.toString();
+})();
+const BASE = BASE_URL;
 const OUT = path.resolve('apps/web/e2e-artifacts');
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -42,7 +48,7 @@ async function main() {
           {
             id: 'weather-1',
             type: 'weather',
-            settings: { lat: 28.6139, lon: 77.209, city: 'New Delhi' },
+            settings: { lat: 12.9716, lon: 77.5946, city: 'Bangalore' },
           },
         ],
         layout: [
@@ -93,17 +99,16 @@ async function main() {
     await page.getByTestId('widget-toolbar').waitFor();
     ok('widget-toolbar');
 
-    // Toolbar pill hidden by default
+    // Toolbar always visible so Customize / Edit are discoverable
     const visibleAttr = await page.getByTestId('widget-toolbar').getAttribute('data-visible');
-    if (visibleAttr === 'false') ok('toolbar-hidden-by-default');
-    else fail('toolbar-hidden-by-default', `data-visible=${visibleAttr}`);
+    if (visibleAttr === 'true') ok('toolbar-always-visible');
+    else fail('toolbar-always-visible', `data-visible=${visibleAttr}`);
 
-    // Hover top edge → toolbar appears
-    await page.getByTestId('widget-toolbar').hover();
-    await page.waitForTimeout(200);
-    const afterHover = await page.getByTestId('widget-toolbar').getAttribute('data-visible');
-    if (afterHover === 'true') ok('toolbar-shows-on-hover');
-    else fail('toolbar-shows-on-hover', `data-visible=${afterHover}`);
+    const customize = page.getByTestId('open-settings');
+    await customize.waitFor();
+    const customizeLabel = await customize.innerText();
+    if (/customize/i.test(customizeLabel)) ok('customize-label', customizeLabel.trim());
+    else fail('customize-label', customizeLabel);
 
     const browserHeader = await page.locator('header.sticky').count();
     if (browserHeader === 0) ok('no-browser-header');
