@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="640" viewBox="0 0 1200 640" fill="none">
+  <rect width="1200" height="640" rx="24" fill="#090A0F"/>
+  <rect x="40" y="40" width="1120" height="56" rx="16" fill="#11131C"/>
+  <circle cx="72" cy="68" r="14" fill="#6366F1"/>
+  <rect x="100" y="58" width="120" height="12" rx="4" fill="#F1F5F9"/>
+  <rect x="100" y="76" width="80" height="8" rx="3" fill="#64748B"/>
+  <rect x="40" y="120" width="270" height="200" rx="20" fill="#11131C" stroke="#FFFFFF18"/>
+  <rect x="330" y="120" width="270" height="200" rx="20" fill="#11131C" stroke="#FFFFFF18"/>
+  <rect x="620" y="120" width="270" height="200" rx="20" fill="#11131C" stroke="#FFFFFF18"/>
+  <rect x="910" y="120" width="250" height="200" rx="20" fill="#11131C" stroke="#FFFFFF18"/>
+  <rect x="40" y="340" width="360" height="240" rx="20" fill="#11131C" stroke="#FFFFFF18"/>
+  <rect x="420" y="340" width="360" height="240" rx="20" fill="#11131C" stroke="#FFFFFF18"/>
+  <rect x="800" y="340" width="360" height="240" rx="20" fill="#11131C" stroke="#FFFFFF18"/>
+  <text x="60" y="150" fill="#94A3B8" font-family="Segoe UI, sans-serif" font-size="12">CPU</text>
+  <text x="60" y="210" fill="#F1F5F9" font-family="Consolas, monospace" font-size="36">24%</text>
+  <text x="350" y="150" fill="#94A3B8" font-family="Segoe UI, sans-serif" font-size="12">MEMORY</text>
+  <text x="350" y="210" fill="#F1F5F9" font-family="Consolas, monospace" font-size="36">61%</text>
+  <text x="640" y="150" fill="#94A3B8" font-family="Segoe UI, sans-serif" font-size="12">NETWORK</text>
+  <text x="640" y="210" fill="#34D399" font-family="Consolas, monospace" font-size="28">12 MB/s</text>
+  <text x="930" y="150" fill="#94A3B8" font-family="Segoe UI, sans-serif" font-size="12">CRYPTO</text>
+  <text x="930" y="200" fill="#F1F5F9" font-family="Consolas, monospace" font-size="18">BTC  +2.4%</text>
+  <text x="930" y="230" fill="#F1F5F9" font-family="Consolas, monospace" font-size="18">ETH  -0.8%</text>
+  <text x="480" y="600" fill="#6366F1" font-family="Segoe UI, sans-serif" font-size="20" font-weight="600">PulseDeck</text>
+</svg>

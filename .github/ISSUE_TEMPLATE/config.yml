@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Widget authoring SOP
+    url: https://github.com/nrzz/pulsedeck/blob/main/docs/CREATING_WIDGETS.md
+    about: How to add a new widget the right way
+  - name: Security reports
+    url: https://github.com/nrzz/pulsedeck/security/advisories/new
+    about: Please do not file public issues for vulnerabilities

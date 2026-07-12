@@ -1,0 +1,92 @@
+{
+  "name": "@pulsedeck/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PulseDeck Windows desktop shell",
+  "author": "PulseDeck contributors",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "npm run build && electron .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pack": "npm run build && electron-builder --dir --config.electronDist=../../node_modules/electron/dist",
+    "dist": "npm run build && node ../../scripts/bundle-server.mjs && electron-builder --win nsis --config.electronDist=../../node_modules/electron/dist"
+  },
+  "dependencies": {
+    "@pulsedeck/server": "*",
+    "koffi": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "electron": "33.4.11",
+    "electron-builder": "25.1.8",
+    "typescript": "^5.7.2"
+  },
+  "build": {
+    "appId": "com.pulsedeck.app",
+    "productName": "PulseDeck",
+    "copyright": "Copyright © PulseDeck contributors",
+    "electronVersion": "33.4.11",
+    "directories": {
+      "output": "release",
+      "buildResources": "resources"
+    },
+    "files": [
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../web/dist",
+        "to": "web",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "resources/icon.png",
+        "to": "icon.png"
+      },
+      {
+        "from": "../../node_modules/koffi",
+        "to": "koffi",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "resources/icon.ico",
+      "artifactName": "PulseDeck-Setup-${version}.${ext}",
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "PulseDeck-Portable-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PulseDeck",
+      "installerIcon": "resources/icon.ico",
+      "uninstallerIcon": "resources/icon.ico",
+      "installerHeaderIcon": "resources/icon.ico"
+    }
+  }
+}

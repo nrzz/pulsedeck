@@ -1,0 +1,45 @@
+name: Widget request
+description: Propose a new dashboard widget
+title: "[widget] "
+labels: ["enhancement", "widget"]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Widget name
+      placeholder: e.g. Docker containers
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - system
+        - network
+        - finance
+        - extras
+        - unsure
+    validations:
+      required: true
+  - type: textarea
+    id: shows
+    attributes:
+      label: What should it show?
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: Data source
+      description: Local metrics, REST API, WebSocket, user settings?
+      placeholder: e.g. Docker Engine API on localhost
+  - type: textarea
+    id: settings
+    attributes:
+      label: Suggested settings
+      placeholder: e.g. refresh interval, filters
+  - type: markdown
+    attributes:
+      value: |
+        Contributors: follow the SOP in [docs/CREATING_WIDGETS.md](../../docs/CREATING_WIDGETS.md).

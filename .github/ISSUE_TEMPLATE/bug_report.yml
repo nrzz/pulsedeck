@@ -1,0 +1,63 @@
+name: Bug report
+description: Something is broken in PulseDeck
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping. For security issues, use [SECURITY.md](../SECURITY.md) instead.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Desktop app / installer
+        - Widget shell (floating cards)
+        - Browser dashboard
+        - Specific widget
+        - Server / metrics / WebSocket
+        - Docs
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Release tag or commit (e.g. v1.0.0)
+      placeholder: v1.0.0
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      placeholder: |
+        Windows version:
+        Install method: installer / npm run dist / npm run dev
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Tray errors, terminal output, or screenshots

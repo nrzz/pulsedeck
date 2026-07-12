@@ -1,0 +1,383 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --accent: 20 184 166;
+  --surface: 248 250 252;
+  --surface-2: 241 245 249;
+  --surface-3: 226 232 240;
+  --ink: 15 23 42;
+  --ink-muted: 100 116 139;
+  --card-opacity: 0.92;
+  --board-opacity: 0.92;
+}
+
+.dark {
+  --surface: 6 10 12;
+  --surface-2: 12 18 22;
+  --surface-3: 22 32 38;
+  --ink: 236 253 245;
+  --ink-muted: 148 163 184;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+  background-color: rgb(var(--surface));
+  background-image:
+    radial-gradient(ellipse 120% 80% at 10% -10%, rgb(var(--accent) / 0.14), transparent 55%),
+    radial-gradient(ellipse 90% 60% at 100% 0%, rgb(6 182 212 / 0.1), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 50% 110%, rgb(16 185 129 / 0.08), transparent 55%),
+    linear-gradient(180deg, rgb(var(--surface)), rgb(var(--surface-2) / 0.4));
+  background-attachment: fixed;
+  min-height: 100vh;
+  color: rgb(var(--ink));
+  overflow-x: hidden;
+}
+
+/* Ambient stage */
+.app-stage {
+  position: relative;
+  isolation: isolate;
+  min-height: 100%;
+}
+
+.app-stage::before,
+.app-stage::after {
+  content: '';
+  position: fixed;
+  inset: auto;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.55;
+  animation: drift 18s ease-in-out infinite alternate;
+}
+
+.app-stage::before {
+  width: 48vw;
+  height: 48vw;
+  top: -12vw;
+  left: -8vw;
+  background: rgb(var(--accent) / 0.28);
+}
+
+.app-stage::after {
+  width: 40vw;
+  height: 40vw;
+  right: -6vw;
+  top: 10vh;
+  background: rgb(6 182 212 / 0.18);
+  animation-delay: -6s;
+}
+
+.ambient-orb {
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+  width: 36vw;
+  height: 36vw;
+  bottom: -14vw;
+  left: 30vw;
+  border-radius: 50%;
+  background: rgb(16 185 129 / 0.12);
+  filter: blur(90px);
+  animation: drift 22s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(4vw, 3vh, 0) scale(1.08);
+  }
+}
+
+/* Grid */
+.react-grid-layout {
+  position: relative;
+  min-height: 200px;
+}
+
+.react-grid-item {
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    width 180ms ease,
+    height 180ms ease;
+}
+
+.react-grid-item.cssTransforms {
+  transition-property: transform, width, height;
+}
+
+.react-grid-item.resizing,
+.react-grid-item.react-draggable-dragging {
+  z-index: 20;
+  transition: none;
+  will-change: transform, width, height;
+}
+
+.react-grid-item.react-draggable-dragging .glass-card {
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgb(var(--accent) / 0.45);
+  transform: scale(1.015);
+}
+
+.react-grid-item > div {
+  height: 100%;
+}
+
+/* NEVER animate transform on .react-grid-item — RGL positions via transform */
+.widget-enter {
+  animation: widget-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes widget-in {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  bottom: 2px;
+  right: 2px;
+  cursor: se-resize;
+  opacity: 0;
+  background: transparent;
+  z-index: 30;
+  transition: opacity 0.15s ease;
+}
+
+.edit-canvas .react-grid-item > .react-resizable-handle,
+.react-grid-item:hover > .react-resizable-handle {
+  opacity: 1;
+}
+
+.react-grid-item > .react-resizable-handle::after {
+  content: '';
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 11px;
+  height: 11px;
+  border-right: 2.5px solid rgb(var(--accent));
+  border-bottom: 2.5px solid rgb(var(--accent));
+  border-radius: 1px;
+  box-shadow: 0 0 12px rgb(var(--accent) / 0.45);
+}
+
+.react-grid-placeholder {
+  background: linear-gradient(135deg, rgb(var(--accent) / 0.22), rgb(6 182 212 / 0.12)) !important;
+  border: 1px dashed rgb(var(--accent) / 0.55) !important;
+  border-radius: 18px !important;
+  opacity: 1 !important;
+}
+
+.edit-canvas {
+  outline: 1px dashed rgb(var(--accent) / 0.25);
+  outline-offset: 10px;
+  border-radius: 24px;
+  background:
+    linear-gradient(rgb(var(--accent) / 0.03), rgb(var(--accent) / 0.03)),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 27px,
+      rgb(var(--accent) / 0.04) 27px,
+      rgb(var(--accent) / 0.04) 28px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 27px,
+      rgb(var(--accent) / 0.04) 27px,
+      rgb(var(--accent) / 0.04) 28px
+    );
+}
+
+.edit-widget {
+  transition:
+    box-shadow 0.2s ease,
+    ring 0.2s ease;
+}
+
+@layer components {
+  .glass-card {
+    @apply rounded-2xl border border-white/10 backdrop-blur-2xl overflow-hidden;
+    background:
+      linear-gradient(145deg, rgb(255 255 255 / 0.07), transparent 42%),
+      linear-gradient(180deg, rgb(255 255 255 / 0.03), transparent 55%),
+      rgb(var(--surface-2) / var(--card-opacity));
+    box-shadow:
+      0 12px 48px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 rgb(255 255 255 / 0.08),
+      inset 0 -1px 0 rgb(0 0 0 / 0.12);
+    transition:
+      box-shadow 0.25s ease,
+      border-color 0.25s ease;
+  }
+
+  .glass-card:hover {
+    border-color: rgb(255 255 255 / 0.16);
+    box-shadow:
+      0 16px 56px rgba(0, 0, 0, 0.38),
+      inset 0 1px 0 rgb(255 255 255 / 0.1),
+      0 0 0 1px rgb(var(--accent) / 0.08);
+  }
+
+  .widget-title {
+    @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-muted;
+  }
+
+  .metric-value {
+    @apply font-mono text-3xl font-semibold tracking-tight;
+  }
+
+  .btn {
+    @apply inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition
+      bg-surface-3/70 hover:bg-surface-3 text-ink border border-white/10 active:scale-[0.98];
+  }
+
+  .btn-accent {
+    @apply btn bg-accent/90 hover:bg-accent text-white border-transparent shadow-lg shadow-accent/25;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-white/10 bg-surface-3/60 px-3 py-2 text-sm text-ink
+      outline-none focus:ring-2 focus:ring-accent/50 placeholder:text-ink-muted;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-toast-in {
+  animation: toast-in 0.25s ease-out;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* ===== Desktop widget shell — invisible canvas, floating cards ===== */
+html.shell-widget,
+body.shell-widget {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+body.shell-widget {
+  overflow: hidden;
+}
+
+.app-stage-widget {
+  min-height: 100%;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.app-stage-widget::before,
+.app-stage-widget::after {
+  display: none !important;
+}
+
+.shell-widget .glass-card {
+  border-color: rgb(255 255 255 / 0.16);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgb(255 255 255 / 0.06),
+    inset 0 1px 0 rgb(255 255 255 / 0.12);
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 0.1), transparent 42%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.05), transparent 55%),
+    rgb(var(--surface-2) / calc(var(--card-opacity) * 0.92));
+  backdrop-filter: blur(20px) saturate(1.25);
+  -webkit-backdrop-filter: blur(20px) saturate(1.25);
+}
+
+.shell-widget .edit-canvas {
+  outline: 1px dashed rgb(var(--accent) / 0.35);
+  outline-offset: 6px;
+  border-radius: 16px;
+  background: transparent !important;
+}
+
+/* Hover hit-area at top for revealing chrome */
+.widget-chrome {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  min-height: 12px;
+}
+
+.widget-chrome-hit {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 28px;
+}
+
+.widget-drag-strip {
+  cursor: grab;
+}
+
+.widget-drag-strip:active {
+  cursor: grabbing;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--ink-muted) / 0.35);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
