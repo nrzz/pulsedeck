@@ -1,5 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import Fastify, { type FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import websocket from '@fastify/websocket';
@@ -245,12 +246,21 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
     });
   });
 
-  const webDist =
-    options.webDistPath ??
-    process.env.PULSEDECK_WEB_DIST ??
-    path.resolve(process.cwd(), 'apps', 'web', 'dist');
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const webDistCandidates = [
+    options.webDistPath,
+    process.env.PULSEDECK_WEB_DIST,
+    path.resolve(process.cwd(), 'apps', 'web', 'dist'),
+    path.resolve(process.cwd(), 'dist'),
+    // npm start -w @pulsedeck/server runs with cwd=apps/server
+    path.resolve(process.cwd(), '..', 'web', 'dist'),
+    // relative to this file: apps/server/dist → apps/web/dist
+    path.resolve(here, '..', '..', 'web', 'dist'),
+  ].filter((p): p is string => Boolean(p));
 
-  if (fs.existsSync(webDist)) {
+  const webDist = webDistCandidates.find((p) => fs.existsSync(p));
+
+  if (webDist) {
     await app.register(fastifyStatic, { root: webDist });
     app.setNotFoundHandler((req, reply) => {
       if (req.url.startsWith('/api') || req.url.startsWith('/ws')) {
@@ -258,6 +268,10 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
       }
       return reply.sendFile('index.html');
     });
+  } else if (!quiet) {
+    console.warn(
+      '[pulsedeck] Web UI dist not found. Tried:\n  ' + webDistCandidates.join('\n  '),
+    );
   }
 
   hub.startHeartbeat();

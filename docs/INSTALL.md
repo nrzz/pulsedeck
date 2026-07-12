@@ -40,7 +40,7 @@ PulseDeck runs a local server on `127.0.0.1` (localhost only). Windows may ask a
 - Allowing **private networks** is fine
 - PulseDeck does **not** need to be exposed to the public internet
 
-External widgets (crypto, stocks, weather, public IP) make outbound HTTPS requests to public APIs.
+External widgets (crypto, stocks, weather, news, public IP) make outbound HTTPS requests to public APIs.
 
 ---
 
