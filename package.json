@@ -1,6 +1,6 @@
 {
   "name": "pulsedeck",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "type": "module",
   "description": "Customizable desktop widget dashboard for Windows & Linux — system vitals, network, crypto, stocks & more",

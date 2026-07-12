@@ -284,11 +284,11 @@ async function testApis() {
   if (ping.res.ok) ok('api-ping');
   else fail('api-ping', `${ping.res.status}`);
 
-  // GPU dual-adapter edge cases
+  // GPU dual-adapter edge cases (empty array is valid — headless CI / no GPU)
   if (metrics.res.ok && Array.isArray(metrics.json?.gpu)) {
     const gpus = metrics.json.gpu;
     if (gpus.length === 0) {
-      ok('api-gpu-optional', 'no GPU reported on this host');
+      ok('api-gpu', 'empty — no GPU on this host');
     } else {
       const allHaveUtil = gpus.every(
         (g) => typeof g.utilization === 'number' && g.utilization >= 0 && g.utilization <= 100,
@@ -306,7 +306,7 @@ async function testApis() {
       }
     }
   } else {
-    fail('api-gpu', 'metrics.gpu missing');
+    fail('api-gpu', 'metrics.gpu missing or not an array');
   }
 
   const cryptoGold = await api('/api/crypto?ids=bitcoin,pax-gold');

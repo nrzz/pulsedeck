@@ -22,8 +22,8 @@ Live CPU, RAM, GPU, disks, network, crypto, stocks, weather, news, and more on a
 
 1. Open **[latest release](https://github.com/nrzz/pulsedeck/releases/latest)**
 2. Download for your OS:
-   - **Windows:** `PulseDeck-Setup-1.1.0.exe`
-   - **Linux:** `PulseDeck-1.1.0.AppImage` or `PulseDeck-1.1.0-amd64.deb`
+   - **Windows:** `PulseDeck-Setup-1.1.1.exe`
+   - **Linux:** `PulseDeck-1.1.1.AppImage` or `PulseDeck-1.1.1-amd64.deb`
 3. Install / run — Windows SmartScreen: **More info → Run anyway**; AppImage: `chmod +x` then run
 4. Launch **PulseDeck**
 

@@ -24,6 +24,7 @@ let slowCache: SlowCache = {
   processes: [],
   disks: [],
   localIps: [],
+  gpu: [],
   updatedAt: 0,
 };
 
@@ -194,6 +195,7 @@ async function refreshSlowMetrics(): Promise<void> {
           }))
       : slowCache.processes;
 
+  const graphicsOk = graphics != null;
   const controllers = graphics?.controllers ?? [];
   const rawGpus = controllers
     .filter((c) => c.model)
@@ -226,7 +228,9 @@ async function refreshSlowMetrics(): Promise<void> {
   slowCache = {
     processes: topProcs,
     wifi,
-    gpu: gpus.length ? gpus : slowCache.gpu,
+    // Always expose an array: [] when the host has no GPU (e.g. CI VMs).
+    // On graphics() timeout, keep the previous sample.
+    gpu: graphicsOk ? gpus : (slowCache.gpu ?? []),
     disks,
     battery: battery
       ? {
@@ -348,7 +352,7 @@ export async function collectMetrics(): Promise<SystemMetrics> {
     timestamp: Date.now(),
     cpu,
     memory,
-    gpu: slowCache.gpu,
+    gpu: slowCache.gpu ?? [],
     disks: slowCache.disks,
     diskIO: slowCache.diskIO,
     network,
