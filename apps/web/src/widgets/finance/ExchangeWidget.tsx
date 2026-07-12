@@ -19,17 +19,25 @@ async function fetchPair(base: string, quote: string): Promise<number | null> {
 export function ExchangeWidget({ id, settings }: WidgetProps) {
   const storeRates = useDashboard((s) => s.exchange);
   const setExchange = useDashboard((s) => s.setExchange);
+  const updateWidgetSettings = useDashboard((s) => s.updateWidgetSettings);
   const pairs = useMemo(
-    () => (settings.pairs as string[]) || ['USD/INR'],
+    () => (settings.pairs as string[]) || ['USD/INR', 'EUR/INR'],
     [settings.pairs],
   );
   const [localRates, setLocalRates] = useState<ExchangeRate[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(pairs.join(', '));
+  const [fetchKey, setFetchKey] = useState(0);
 
-  const rates = storeRates ?? localRates;
+  const rates = useMemo(() => {
+    const wanted = new Set(pairs.map((p) => p.toUpperCase()));
+    const fromStore = (storeRates ?? []).filter((r) => wanted.has(r.pair.toUpperCase()));
+    if (fromStore.length) return fromStore;
+    return (localRates ?? []).filter((r) => wanted.has(r.pair.toUpperCase()));
+  }, [storeRates, localRates, pairs]);
 
   useEffect(() => {
-    if (storeRates?.length) return;
     let cancelled = false;
     setLoading(true);
     void (async () => {
@@ -49,27 +57,59 @@ export function ExchangeWidget({ id, settings }: WidgetProps) {
     return () => {
       cancelled = true;
     };
-  }, [pairs, storeRates, setExchange]);
+  }, [pairs, setExchange, fetchKey]);
 
   return (
-    <WidgetShell id={id} title="Exchange">
-      <div className="space-y-2 overflow-hidden h-full min-h-0">
-        {!rates?.length && loading && (
-          <div className="text-sm text-ink-muted">Loading FX…</div>
-        )}
-        {!rates?.length && !loading && (
-          <div className="text-sm text-ink-muted">No rates available</div>
-        )}
-        {rates?.slice(0, 5).map((r) => (
-          <div key={r.pair} className="flex justify-between items-center text-sm gap-2">
-            <span className="font-medium truncate">{r.pair}</span>
-            <span className="font-mono tabular-nums shrink-0">{formatPrice(r.rate)}</span>
-          </div>
-        ))}
-        {(rates?.length ?? 0) > 5 && (
-          <div className="text-[10px] text-ink-muted">+{(rates?.length ?? 0) - 5} more</div>
-        )}
-      </div>
+    <WidgetShell
+      id={id}
+      title="Exchange"
+      allowScroll={editing}
+      onSettings={() => {
+        setDraft(pairs.join(', '));
+        setEditing((v) => !v);
+      }}
+    >
+      {editing ? (
+        <div className="space-y-2" data-no-drag>
+          <p className="text-[11px] text-ink-muted">Pairs like USD/INR, EUR/USD</p>
+          <textarea
+            className="input h-20 resize-none font-mono text-xs"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+          />
+          <button
+            type="button"
+            className="btn-accent w-full justify-center"
+            onClick={() => {
+              const next = draft
+                .split(',')
+                .map((s) => s.trim().toUpperCase())
+                .filter(Boolean);
+              updateWidgetSettings(id, { pairs: next });
+              setFetchKey((k) => k + 1);
+              setEditing(false);
+            }}
+          >
+            Save pairs
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-2 overflow-hidden h-full min-h-0">
+          {!rates.length && loading && <div className="text-sm text-ink-muted">Loading FX…</div>}
+          {!rates.length && !loading && (
+            <div className="text-sm text-ink-muted">No rates — check pairs in gear</div>
+          )}
+          {rates.slice(0, 5).map((r) => (
+            <div key={r.pair} className="flex justify-between items-center text-sm gap-2">
+              <span className="font-medium truncate">{r.pair}</span>
+              <span className="font-mono tabular-nums shrink-0">{formatPrice(r.rate)}</span>
+            </div>
+          ))}
+          {rates.length > 5 && (
+            <div className="text-[10px] text-ink-muted">+{rates.length - 5} more</div>
+          )}
+        </div>
+      )}
     </WidgetShell>
   );
 }

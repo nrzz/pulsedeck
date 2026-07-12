@@ -54,7 +54,14 @@ export function StocksWidget({ id, settings }: WidgetProps) {
         </div>
       ) : (
         <div className="space-y-1.5 h-full min-h-0 overflow-hidden">
-          {!list.length && <div className="text-sm text-ink-muted">Loading quotes…</div>}
+          {!list.length && (
+            <div className="text-sm text-ink-muted space-y-1">
+              <div>{stocks.length ? 'No matching tickers' : 'Loading quotes…'}</div>
+              {stocks.length > 0 && (
+                <div className="text-[10px]">Open gear and set symbols (AAPL, MSFT)</div>
+              )}
+            </div>
+          )}
           {list.slice(0, 4).map((s) => (
             <div key={s.symbol} className="flex items-center justify-between text-[12px] gap-2">
               <span className="font-semibold truncate">{s.symbol}</span>

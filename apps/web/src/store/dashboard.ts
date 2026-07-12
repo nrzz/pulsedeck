@@ -154,7 +154,7 @@ export const useDashboard = create<DashboardState>((set, get) => ({
       return { config: { ...state.config, presets } };
     }),
 
-  updateWidgetSettings: (id, settings) =>
+  updateWidgetSettings: (id, settings) => {
     set((state) => {
       const presets = state.config.presets.map((p) => {
         if (p.id !== state.config.activePresetId) return p;
@@ -166,7 +166,12 @@ export const useDashboard = create<DashboardState>((set, get) => ({
         };
       });
       return { config: { ...state.config, presets } };
-    }),
+    });
+    // Persist gear changes without requiring Save (widgets previously lost settings on restart)
+    void import('../hooks/useWebSocket').then(({ persistConfig }) => {
+      void persistConfig(get().config).catch(() => undefined);
+    });
+  },
 
   removeWidget: (id) =>
     set((state) => {

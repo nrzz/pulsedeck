@@ -256,7 +256,13 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     category: 'network',
     description: 'Watched hosts / ports',
     defaultSize: { w: 3, h: 3, minW: 2, minH: 2 },
-    defaultSettings: { hosts: ['1.1.1.1:443', '8.8.8.8:53'] },
+    defaultSettings: {
+      hosts: ['1.1.1.1', '8.8.8.8'],
+      ports: [
+        { host: '1.1.1.1', port: 443, label: '1.1.1.1:443' },
+        { host: '8.8.8.8', port: 53, label: '8.8.8.8:53' },
+      ],
+    },
     component: PortsWidget,
   },
   'bandwidth-cap': {
@@ -410,6 +416,12 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     category: 'extras',
     description: 'Quick launch buttons',
     defaultSize: { w: 3, h: 3, minW: 2, minH: 2 },
+    defaultSettings: {
+      links: [
+        { id: 'gh', title: 'GitHub', url: 'https://github.com' },
+        { id: 'yt', title: 'YouTube', url: 'https://youtube.com' },
+      ],
+    },
     component: LauncherWidget,
   },
   headline: {

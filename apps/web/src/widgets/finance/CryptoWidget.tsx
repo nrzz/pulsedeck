@@ -64,7 +64,14 @@ export function CryptoWidget({ id, settings }: WidgetProps) {
         </div>
       ) : (
         <div className="space-y-1.5 h-full min-h-0 overflow-hidden">
-          {!list.length && <div className="text-sm text-ink-muted">Loading quotes…</div>}
+          {!list.length && (
+            <div className="text-sm text-ink-muted space-y-1">
+              <div>{crypto.length ? 'No matching coins' : 'Loading quotes…'}</div>
+              {crypto.length > 0 && (
+                <div className="text-[10px]">Open gear and use CoinGecko ids (bitcoin, ethereum)</div>
+              )}
+            </div>
+          )}
           {list.slice(0, 4).map((c) => (
             <div key={c.id} className="flex items-center gap-2 min-w-0">
               {c.image && <img src={c.image} alt="" className="w-4 h-4 rounded-full shrink-0" />}

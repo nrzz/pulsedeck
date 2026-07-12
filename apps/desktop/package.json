@@ -1,6 +1,6 @@
 {
   "name": "@pulsedeck/desktop",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "description": "PulseDeck Windows desktop shell",
   "author": "PulseDeck contributors",
@@ -99,5 +99,6 @@
     }
   }
 }
+
 
 

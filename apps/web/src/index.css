@@ -249,7 +249,7 @@ body {
   }
 
   .widget-title {
-    @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-muted;
+    @apply text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-muted;
   }
 
   .metric-value {

@@ -93,7 +93,9 @@ export function WidgetShell({
               <GripVertical size={16} />
             </span>
           )}
-          <h3 className="widget-title flex-1 truncate">{title}</h3>
+          <h3 className="widget-title flex-1 truncate" title={title}>
+            {title}
+          </h3>
           <div
             className="flex items-center gap-0.5 shrink-0"
             data-no-drag
