@@ -20,13 +20,21 @@ jobs:
           cache: npm
 
       - name: Install
-        run: npm ci
+        run: npm ci --prefer-online
 
-      - name: Rebuild native / builder binaries
-        shell: bash
+      - name: Ensure app-builder binary
+        shell: pwsh
         run: |
-          npm rebuild
-          npm install -D app-builder-bin electron-builder -w @pulsedeck/desktop
+          $exe = "node_modules/app-builder-bin/win/x64/app-builder.exe"
+          if (-not (Test-Path $exe)) {
+            Write-Host "Missing $exe — forcing reinstall of app-builder-bin"
+            Remove-Item -Recurse -Force node_modules/app-builder-bin -ErrorAction SilentlyContinue
+            npm install app-builder-bin@5.0.0-alpha.10 --force --no-save
+          }
+          if (-not (Test-Path $exe)) {
+            throw "app-builder.exe still missing at $exe"
+          }
+          Get-Item $exe | Format-List FullName, Length
 
       - name: Build installer
         env:
