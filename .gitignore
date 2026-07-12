@@ -24,3 +24,4 @@ release/
 *.exe
 *.blockmap
 apps/web/e2e-artifacts/
+.cache/

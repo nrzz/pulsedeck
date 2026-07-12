@@ -9,8 +9,8 @@
     "build": "tsc -p tsconfig.json",
     "dev": "npm run build && electron .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "pack": "npm run build && electron-builder --dir --config.electronDist=../../node_modules/electron/dist",
-    "dist": "npm run build && node ../../scripts/bundle-server.mjs && electron-builder --win nsis --config.electronDist=../../node_modules/electron/dist"
+    "pack": "npm run build && node ../../scripts/with-app-builder.mjs electron-builder --dir --config.electronDist=../../node_modules/electron/dist",
+    "dist": "npm run build && node ../../scripts/bundle-server.mjs && node ../../scripts/with-app-builder.mjs electron-builder --win nsis --config.electronDist=../../node_modules/electron/dist --config.npmRebuild=false"
   },
   "dependencies": {
     "@pulsedeck/server": "*",
@@ -64,6 +64,7 @@
       }
     ],
     "asar": true,
+    "npmRebuild": false,
     "win": {
       "target": [
         {

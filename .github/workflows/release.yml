@@ -35,12 +35,20 @@ jobs:
             throw "app-builder.exe still missing at $exe"
           }
           Get-Item $exe | Format-List FullName, Length
+          New-Item -ItemType Directory -Force -Path .cache | Out-Null
+          Remove-Item -Recurse -Force .cache/app-builder-bin -ErrorAction SilentlyContinue
+          Copy-Item -Recurse -Force node_modules/app-builder-bin .cache/app-builder-bin
 
       - name: Build installer
+        shell: pwsh
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-        run: npm run dist
-
+        run: |
+          npm run dist
+          if (-not (Test-Path "node_modules/app-builder-bin/win/x64/app-builder.exe") -and (Test-Path ".cache/app-builder-bin")) {
+            Copy-Item -Recurse -Force .cache/app-builder-bin node_modules/app-builder-bin
+          }
+          Get-ChildItem apps/desktop/release/PulseDeck-Setup-*.exe | Format-Table Name, Length
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
