@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] — 2026-07-12
+
+### Changed
+
+- **News tray** scrolls when headlines overflow (other widgets stay clipped)
+- Defaults fetch **~20 mixed headlines** across more topics (not one item per topic)
+- Up to **8 topics**, item count options **8–32**, richer suggestion packs; old trays with limit ≤6 auto-upgrade to 20
+
 ## [1.0.3] — 2026-07-12
 
 ### Fixed
@@ -79,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grid drag/resize broken by CSS `transform` entrance animation on grid items
 - Packaged app crash from top-level `import.meta.url` in CJS server bundle
 
-[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.0.3...HEAD
+[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.0.4...HEAD
+[1.0.4]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.4
 [1.0.3]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.3
 [1.0.2]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.2
 [1.0.1]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.1

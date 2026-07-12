@@ -303,41 +303,45 @@ export async function fetchNews(options: {
   feeds?: string[];
   limit?: number;
 }): Promise<NewsFeedResult> {
-  const limit = Math.min(12, Math.max(3, options.limit ?? 5));
-  const topicIds = (options.topics?.length ? options.topics : ['technology', 'world']).slice(0, 5);
-  const customFeeds = (options.feeds || []).filter(Boolean).slice(0, 2);
+  const limit = Math.min(40, Math.max(6, options.limit ?? 20));
+  const topicIds = (options.topics?.length ? options.topics : ['technology', 'world', 'india']).slice(
+    0,
+    8,
+  );
+  const customFeeds = (options.feeds || []).filter(Boolean).slice(0, 3);
+
+  // Pull enough per topic so round-robin isn't "1 headline each"
+  const perFeed = Math.max(6, Math.ceil((limit * 1.25) / Math.max(1, topicIds.length)));
 
   const jobs: Promise<NewsItem[]>[] = [];
   for (const id of topicIds) {
     const meta = NEWS_TOPICS.find((t) => t.id === id);
     if (!meta) continue;
-    const perFeed = Math.max(2, Math.ceil(limit / Math.max(1, topicIds.length)));
     jobs.push(fetchOneFeed(meta.feed, meta.label, meta.id, perFeed));
   }
   for (let i = 0; i < customFeeds.length; i++) {
-    jobs.push(fetchOneFeed(customFeeds[i], `Custom ${i + 1}`, `custom-${i}`, 3));
+    jobs.push(fetchOneFeed(customFeeds[i], `Custom ${i + 1}`, `custom-${i}`, Math.max(6, perFeed)));
   }
 
   const batches = await Promise.all(jobs);
   const seen = new Set<string>();
   const merged: NewsItem[] = [];
-  // Round-robin so topics stay mixed without large sorts
+  // Round-robin across topics/feeds for variety (not 1-per-topic when limit is small)
   let idx = 0;
   while (merged.length < limit) {
-    let added = false;
+    let progressed = false;
     for (const batch of batches) {
-      if (idx < batch.length) {
-        const item = batch[idx];
-        const key = (item.link || item.title).toLowerCase();
-        if (!seen.has(key)) {
-          seen.add(key);
-          merged.push(item);
-          added = true;
-          if (merged.length >= limit) break;
-        }
+      if (idx >= batch.length) continue;
+      progressed = true;
+      const item = batch[idx];
+      const key = (item.link || item.title).toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(item);
+        if (merged.length >= limit) break;
       }
     }
-    if (!added) break;
+    if (!progressed) break;
     idx += 1;
   }
 

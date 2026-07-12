@@ -131,7 +131,7 @@ export function WidgetShell({
         </div>
       )}
 
-      {/* Live widgets clip — never show scrollbars. allowScroll only for gear panels. */}
+      {/* Most live widgets clip. allowScroll for gear panels + News tray. */}
       <div
         className={cn(
           'widget-body flex-1 min-h-0 relative z-[1]',

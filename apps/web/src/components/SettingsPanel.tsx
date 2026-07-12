@@ -226,13 +226,13 @@ export function SettingsPanel() {
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wide text-ink-muted mb-1.5">
-                Topics (max 5)
+                Topics (max 8)
               </div>
               <div className="flex flex-wrap gap-1">
                 {NEWS_TOPICS.map((t) => {
-                  const selected = (config.shell?.newsDefaults?.topics ?? ['technology', 'world']).includes(
-                    t.id,
-                  );
+                  const selected = (
+                    config.shell?.newsDefaults?.topics ?? ['technology', 'world', 'india', 'business']
+                  ).includes(t.id);
                   return (
                     <button
                       key={t.id}
@@ -242,10 +242,15 @@ export function SettingsPanel() {
                       }`}
                       onClick={() => {
                         const cur = new Set(
-                          config.shell?.newsDefaults?.topics ?? ['technology', 'world'],
+                          config.shell?.newsDefaults?.topics ?? [
+                            'technology',
+                            'world',
+                            'india',
+                            'business',
+                          ],
                         );
                         if (cur.has(t.id)) cur.delete(t.id);
-                        else if (cur.size < 5) cur.add(t.id);
+                        else if (cur.size < 8) cur.add(t.id);
                         const topics = [...cur];
                         if (!topics.length) topics.push('technology');
                         patch({
@@ -267,7 +272,7 @@ export function SettingsPanel() {
                 <span className="text-ink-muted">Default items</span>
                 <select
                   className="input !py-1.5"
-                  value={config.shell?.newsDefaults?.limit ?? 5}
+                  value={config.shell?.newsDefaults?.limit ?? 20}
                   onChange={(e) =>
                     patch({
                       shell: {
@@ -280,7 +285,7 @@ export function SettingsPanel() {
                     })
                   }
                 >
-                  {[3, 5, 8].map((n) => (
+                  {[8, 12, 16, 20, 24, 32].map((n) => (
                     <option key={n} value={n}>
                       {n}
                     </option>

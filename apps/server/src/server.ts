@@ -217,7 +217,7 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
 
   app.get('/api/news', async (req) => {
     const q = req.query as { topics?: string; feeds?: string; limit?: string };
-    const topics = (q.topics || 'technology,world')
+    const topics = (q.topics || 'technology,world,india,business')
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
@@ -225,7 +225,7 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
-    const limit = Number(q.limit) || 5;
+    const limit = Number(q.limit) || 20;
     return fetchNews({ topics, feeds, limit });
   });
 

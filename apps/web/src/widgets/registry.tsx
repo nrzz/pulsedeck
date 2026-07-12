@@ -438,10 +438,10 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'News tray',
     category: 'extras',
     description: 'Topic headlines with suggestions',
-    defaultSize: { w: 4, h: 4, minW: 3, minH: 3 },
+    defaultSize: { w: 4, h: 5, minW: 3, minH: 3 },
     defaultSettings: {
-      topics: ['technology', 'world'],
-      limit: 5,
+      topics: ['technology', 'world', 'india', 'business'],
+      limit: 20,
       refreshMinutes: 20,
       showSource: true,
       showTime: false,

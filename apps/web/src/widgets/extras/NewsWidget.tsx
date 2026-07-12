@@ -32,9 +32,12 @@ async function loadNews(
   widgetId: string,
   settings: NewsSettings,
 ): Promise<void> {
-  const topics = (settings.topics?.length ? settings.topics : ['technology', 'world']).slice(0, 5);
-  const feeds = (settings.feeds || []).slice(0, 2);
-  const limit = Math.min(12, Math.max(3, settings.limit ?? 5));
+  const topics = (settings.topics?.length ? settings.topics : ['technology', 'world', 'india']).slice(
+    0,
+    8,
+  );
+  const feeds = (settings.feeds || []).slice(0, 3);
+  const limit = Math.min(40, Math.max(6, settings.limit ?? 20));
   const qs = new URLSearchParams({
     topics: topics.join(','),
     limit: String(limit),
@@ -60,11 +63,15 @@ export function NewsWidget({ id, settings }: WidgetProps) {
     const topics =
       (settings.topics as string[] | undefined) ??
       defaults?.topics ??
-      ['technology', 'world'];
+      ['technology', 'world', 'india', 'business'];
     return {
       topics,
       feeds: (settings.feeds as string[] | undefined) ?? [],
-      limit: (settings.limit as number | undefined) ?? defaults?.limit ?? 5,
+      // Migrate old trays that defaulted to 3–5 items (felt like 1 per topic)
+      limit: (() => {
+        const raw = (settings.limit as number | undefined) ?? defaults?.limit ?? 20;
+        return raw <= 6 ? 20 : raw;
+      })(),
       refreshMinutes:
         (settings.refreshMinutes as number | undefined) ?? defaults?.refreshMinutes ?? 20,
       showSource: (settings.showSource as boolean | undefined) ?? defaults?.showSource ?? true,
@@ -115,7 +122,7 @@ export function NewsWidget({ id, settings }: WidgetProps) {
   const toggleTopic = (topicId: NewsTopicId) => {
     const set = new Set(cfg.topics || []);
     if (set.has(topicId)) set.delete(topicId);
-    else if (set.size < 5) set.add(topicId);
+    else if (set.size < 8) set.add(topicId);
     const next = [...set];
     if (!next.length) next.push('technology');
     void save({ topics: next });
@@ -146,7 +153,7 @@ export function NewsWidget({ id, settings }: WidgetProps) {
 
         <div>
           <div className="text-[10px] uppercase tracking-wide text-ink-muted mb-1.5">
-            Topics <span className="normal-case opacity-70">(max 5)</span>
+            Topics <span className="normal-case opacity-70">(max 8)</span>
           </div>
           <div className="flex flex-wrap gap-1">
             {NEWS_TOPICS.map((t) => {
@@ -175,7 +182,7 @@ export function NewsWidget({ id, settings }: WidgetProps) {
               value={cfg.limit}
               onChange={(e) => void save({ limit: Number(e.target.value) })}
             >
-              {[3, 5, 8, 12].map((n) => (
+              {[8, 12, 16, 20, 24, 32].map((n) => (
                 <option key={n} value={n}>
                   {n}
                 </option>
@@ -233,7 +240,7 @@ export function NewsWidget({ id, settings }: WidgetProps) {
         </div>
 
         <div className="space-y-1">
-          <span className="text-[10px] text-ink-muted">Custom RSS (max 2)</span>
+          <span className="text-[10px] text-ink-muted">Custom RSS (max 3)</span>
           <div className="flex gap-1">
             <input
               className="input !py-1 !text-xs flex-1"
@@ -247,7 +254,7 @@ export function NewsWidget({ id, settings }: WidgetProps) {
               onClick={() => {
                 const url = customFeed.trim();
                 if (!url) return;
-                const feeds = [...(cfg.feeds || []), url].slice(0, 2);
+                const feeds = [...(cfg.feeds || []), url].slice(0, 3);
                 setCustomFeed('');
                 void save({ feeds });
               }}
@@ -270,7 +277,7 @@ export function NewsWidget({ id, settings }: WidgetProps) {
         </div>
 
         <p className="text-[10px] text-ink-muted leading-snug">
-          Titles + links only · server-cached 12m · max 5 topics · keeps RAM low.
+          Titles + links only · mixed across topics · tray scrolls · server-cached 12m.
         </p>
       </div>
     );
@@ -291,12 +298,9 @@ export function NewsWidget({ id, settings }: WidgetProps) {
       </div>
     );
   } else {
-    const limit = compact ? 5 : 6;
-    const shown = news.slice(0, limit);
-    const more = news.length - shown.length;
     body = (
-      <ul className={`h-full min-h-0 overflow-hidden ${compact ? 'space-y-1' : 'space-y-1.5'}`}>
-        {shown.map((item, i) => (
+      <ul className={`min-h-0 ${compact ? 'space-y-1' : 'space-y-1.5'}`}>
+        {news.map((item, i) => (
           <li key={`${item.link || item.title}-${i}`} className="min-w-0">
             {item.link ? (
               <a
@@ -323,9 +327,6 @@ export function NewsWidget({ id, settings }: WidgetProps) {
             )}
           </li>
         ))}
-        {more > 0 && (
-          <li className="text-[10px] text-ink-muted">+{more} more</li>
-        )}
       </ul>
     );
   }
@@ -335,7 +336,7 @@ export function NewsWidget({ id, settings }: WidgetProps) {
       id={id}
       title="News"
       onSettings={() => setEditing((v) => !v)}
-      allowScroll={editing}
+      allowScroll
       actions={
         <button
           type="button"

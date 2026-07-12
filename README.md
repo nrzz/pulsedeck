@@ -21,7 +21,7 @@ Live CPU, RAM, GPU, disks, network, crypto, stocks, weather, news, and more on a
 **Most people only need the installer.** You do not need Node.js or this repository.
 
 1. Open **[latest release](https://github.com/nrzz/pulsedeck/releases/latest)**
-2. Download **`PulseDeck-Setup-1.0.3.exe`** (or the newest `PulseDeck-Setup-x.x.x.exe`)
+2. Download **`PulseDeck-Setup-1.0.4.exe`** (or the newest `PulseDeck-Setup-x.x.x.exe`)
 3. Run it — if SmartScreen appears: **More info → Run anyway**
 4. Launch **PulseDeck** from the Start menu
 

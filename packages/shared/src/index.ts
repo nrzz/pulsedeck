@@ -247,8 +247,8 @@ export const DEFAULT_SHELL: ShellConfig = {
   snapToGrid: true,
   alerts: { cpu: 90, ram: 90, disk: 90, temp: 85 },
   newsDefaults: {
-    topics: ['technology', 'world'],
-    limit: 5,
+    topics: ['technology', 'world', 'india', 'business'],
+    limit: 20,
     refreshMinutes: 20,
     showSource: true,
     showTime: false,
@@ -310,10 +310,16 @@ export type NewsTopicId = (typeof NEWS_TOPICS)[number]['id'];
 
 export const NEWS_SUGGESTIONS = [
   {
+    id: 'daily-brief',
+    name: 'Daily brief',
+    description: 'Tech + world + India + business + AI',
+    topics: ['technology', 'world', 'india', 'business', 'ai'] as NewsTopicId[],
+  },
+  {
     id: 'tech-pulse',
     name: 'Tech pulse',
-    description: 'Tech + AI + HN',
-    topics: ['technology', 'ai', 'hacker-news'] as NewsTopicId[],
+    description: 'Tech + AI + HN + Verge',
+    topics: ['technology', 'ai', 'hacker-news', 'verge'] as NewsTopicId[],
   },
   {
     id: 'india-morning',
@@ -657,8 +663,8 @@ export function createNamedPresets(): LayoutPreset[] {
           id: 'news-1',
           type: 'news',
           settings: {
-            topics: ['technology', 'world'],
-            limit: 5,
+            topics: ['technology', 'world', 'india', 'business', 'ai'],
+            limit: 20,
             refreshMinutes: 20,
             showSource: true,
             density: 'compact',
