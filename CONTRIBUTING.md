@@ -88,6 +88,16 @@ npm run test:e2e:full
 
 That is the main E2E entry (catalog, APIs, tray/WorkerW contracts). Other `test:e2e*` scripts are narrower helpers.
 
+## Screenshots for docs
+
+With a built server running (`npm run build && npm start`):
+
+```bash
+PULSEDECK_URL=http://127.0.0.1:8787 node scripts/capture-docs-screenshots.mjs
+```
+
+Writes `docs/screenshot-dashboard.png`, `screenshot-widget.png`, `screenshot-customize.png`, and `screenshot-add-widget.png`.
+
 ## Guidelines
 
 - Prefer TypeScript; keep shared types in `packages/shared`

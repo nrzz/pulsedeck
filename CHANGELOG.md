@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Public docs refreshed for **v1.0.1**: clearer install/usage copy and new screenshots (dashboard, widget shell, customize, add-widget catalog)
+
 ## [1.0.1] — 2026-07-12
 
 ### Added

@@ -2,6 +2,8 @@
 
 PulseDeck is an npm workspaces monorepo: a React widget UI, a local Fastify metrics server, and an Electron shell that packages them for Windows.
 
+**End users:** you do not need this document — install from [Releases](https://github.com/nrzz/pulsedeck/releases/latest) and see [INSTALL.md](INSTALL.md).
+
 ## Monorepo layout
 
 ```
