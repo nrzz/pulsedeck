@@ -1,8 +1,8 @@
 # Installing PulseDeck
 
-PulseDeck is a **Windows desktop app**. Most users only need the installer from GitHub Releases — no Node.js, no command line.
+PulseDeck is a **Windows desktop app**. You only need the installer from GitHub Releases — no Node.js, no command line, no clone of this repo.
 
-## Recommended: download the installer
+## Download the installer
 
 1. Go to **Releases**:  
    `https://github.com/nrzz/pulsedeck/releases/latest`
@@ -79,63 +79,6 @@ Your config in `%APPDATA%\PulseDeck` may remain; delete that folder manually if 
 
 ---
 
-## Build from source (developers)
-
-Fresh clone from GitHub (or any git remote):
-
-```bash
-git clone https://github.com/nrzz/pulsedeck.git
-cd pulsedeck
-npm install
-npm run typecheck
-npm run build
-```
-
-### Dev (browser)
-
-```bash
-npm run dev
-# UI http://localhost:5173 — API http://127.0.0.1:8787
-```
-
-### Desktop installer
-
-```bash
-npm run dist
-```
-
-Installer output:
-
-```
-apps/desktop/release/PulseDeck-Setup-1.0.0.exe
-```
-
-### Verify after clone
-
-With `npm run dev` running in one terminal:
-
-```bash
-npm run test:e2e:full
-```
-
-Checks WorkerW/tray source contracts, APIs (including `/api/news`), and that all catalog widgets can be placed on the board.
-
-### Requirements
-
-- Windows 10/11 x64
-- Node.js 18+
-
-### Local symlink / SmartScreen tips when building
-
-If `electron-builder` fails extracting `winCodeSign` with “Cannot create symbolic link”:
-
-1. Enable **Developer Mode** in Windows Settings, or
-2. Run the build in a terminal with symlink privileges
-
-CI (GitHub Actions) builds normally without this issue.
-
----
-
 ## Troubleshooting
 
 | Problem                        | Fix                                                                                          |
@@ -157,14 +100,6 @@ Still stuck? Open a GitHub issue with:
 
 ---
 
-## Browser-only mode (optional)
+## Building from source?
 
-If you prefer not to use the desktop shell:
-
-```bash
-npm install
-npm run build
-npm start
-```
-
-Then open **http://127.0.0.1:8787**
+That is for contributors only — see [CONTRIBUTING.md](../CONTRIBUTING.md).

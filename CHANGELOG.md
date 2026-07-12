@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Default weather city **Bangalore**; lighter memory defaults (shorter sparkline history)
 - Tray always pops context menu (never toggles hide on single click)
 - Always-visible Customize / Presets toolbar on the widget shell
+- Docs are **installer-first** — end-user install lives in README / INSTALL; contributor npm workflows live in CONTRIBUTING only
 
 ### Fixed
 
@@ -32,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grid column changes proportionally reflow layouts; layout packs scale to 8/12/16 cols
 - Corner radius theme applied to edit chrome / grid placeholder; dead `hide-widget-titles` CSS class toggle removed
 - Settings/Add modal titles no longer hidden when widget titles are off
+
+### Removed
+
+- Unused docs image assets (`app-icon.png`, `screenshot-desktop.png`, `screenshot-placeholder.svg`)
 
 ## [1.0.0] — 2026-07-12
 
