@@ -45,7 +45,8 @@ const timer = setInterval(() => {
 
 const [cmd, ...cmdArgs] = args;
 const result = spawnSync(cmd, cmdArgs, {
-  cwd: root,
+  // Keep caller's cwd (apps/desktop) so electronDist=../../node_modules resolves correctly
+  cwd: process.cwd(),
   stdio: 'inherit',
   shell: true,
   env: process.env,
