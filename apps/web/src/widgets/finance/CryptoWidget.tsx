@@ -35,6 +35,7 @@ export function CryptoWidget({ id, settings }: WidgetProps) {
         setDraft(symbols.join(', '));
         setEditing((v) => !v);
       }}
+      allowScroll={editing}
     >
       {editing ? (
         <div className="space-y-2">
@@ -62,37 +63,40 @@ export function CryptoWidget({ id, settings }: WidgetProps) {
           </button>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5 h-full min-h-0 overflow-hidden">
           {!list.length && <div className="text-sm text-ink-muted">Loading quotes…</div>}
-          {list.map((c) => (
-            <div key={c.id} className="flex items-center gap-3">
-              {c.image && <img src={c.image} alt="" className="w-5 h-5 rounded-full" />}
+          {list.slice(0, 4).map((c) => (
+            <div key={c.id} className="flex items-center gap-2 min-w-0">
+              {c.image && <img src={c.image} alt="" className="w-4 h-4 rounded-full shrink-0" />}
               <div className="flex-1 min-w-0">
-                <div className="flex justify-between">
-                  <span className="font-medium text-sm">{c.symbol}</span>
-                  <span className="font-mono text-sm">${formatPrice(c.price)}</span>
+                <div className="flex justify-between gap-2">
+                  <span className="font-medium text-[12px] truncate">{c.symbol}</span>
+                  <span className="font-mono text-[12px] tabular-nums shrink-0">${formatPrice(c.price)}</span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center gap-2">
                   <span
                     className={cn(
-                      'text-xs font-mono',
+                      'text-[10px] font-mono',
                       c.change24h >= 0 ? 'text-emerald-400' : 'text-red-400',
                     )}
                   >
                     {c.change24h >= 0 ? '+' : ''}
                     {c.change24h.toFixed(2)}%
                   </span>
-                  <div className="w-20">
+                  <div className="w-16 shrink-0">
                     <Sparkline
                       data={c.sparkline}
                       color={c.change24h >= 0 ? '#34d399' : '#f87171'}
-                      height={20}
+                      height={16}
                     />
                   </div>
                 </div>
               </div>
             </div>
           ))}
+          {list.length > 4 && (
+            <div className="text-[10px] text-ink-muted">+{list.length - 4} more</div>
+          )}
         </div>
       )}
     </WidgetShell>

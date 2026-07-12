@@ -27,6 +27,7 @@ export function StocksWidget({ id, settings }: WidgetProps) {
         setDraft(symbols.join(', '));
         setEditing((v) => !v);
       }}
+      allowScroll={editing}
     >
       {editing ? (
         <div className="space-y-2">
@@ -52,16 +53,16 @@ export function StocksWidget({ id, settings }: WidgetProps) {
           </button>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5 h-full min-h-0 overflow-hidden">
           {!list.length && <div className="text-sm text-ink-muted">Loading quotes…</div>}
-          {list.map((s) => (
-            <div key={s.symbol} className="flex items-center justify-between text-sm">
-              <span className="font-semibold">{s.symbol}</span>
-              <div className="text-right">
-                <div className="font-mono">${formatPrice(s.price)}</div>
+          {list.slice(0, 4).map((s) => (
+            <div key={s.symbol} className="flex items-center justify-between text-[12px] gap-2">
+              <span className="font-semibold truncate">{s.symbol}</span>
+              <div className="text-right shrink-0">
+                <div className="font-mono tabular-nums">${formatPrice(s.price)}</div>
                 <div
                   className={cn(
-                    'text-xs font-mono',
+                    'text-[10px] font-mono',
                     s.changePercent >= 0 ? 'text-emerald-400' : 'text-red-400',
                   )}
                 >
@@ -71,6 +72,9 @@ export function StocksWidget({ id, settings }: WidgetProps) {
               </div>
             </div>
           ))}
+          {list.length > 4 && (
+            <div className="text-[10px] text-ink-muted">+{list.length - 4} more</div>
+          )}
         </div>
       )}
     </WidgetShell>

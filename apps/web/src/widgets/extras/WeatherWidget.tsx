@@ -118,7 +118,7 @@ export function WeatherWidget({ id, settings }: WidgetProps) {
     body = (
       <div className="h-full flex flex-col justify-center gap-0.5 px-0.5">
         <div className="flex items-end justify-between gap-2">
-          <div className="text-3xl font-mono font-semibold tabular-nums leading-none tracking-tight">
+          <div className="text-xl font-mono font-semibold tabular-nums leading-none tracking-tight">
             {Math.round(weather.temperature)}°
           </div>
           <Cloud className="text-accent shrink-0 mb-1" size={22} />

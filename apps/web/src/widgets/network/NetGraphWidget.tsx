@@ -15,18 +15,18 @@ export function NetGraphWidget({ id }: WidgetProps) {
       {!metrics ? (
         <WidgetSkeleton label="Loading network graph" />
       ) : (
-        <div className="flex flex-col gap-3 h-full min-h-0">
-          <div className="flex-1 min-h-0">
-            <div className="flex items-center gap-1 text-emerald-400 text-xs mb-1">
-              <ArrowDown size={12} /> RX
+        <div className="flex flex-col gap-2 h-full min-h-0 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="flex items-center gap-1 text-emerald-400 text-[10px] mb-0.5">
+              <ArrowDown size={11} /> RX
             </div>
-            <Sparkline data={historyRx} color="#34d399" height={48} />
+            <Sparkline data={historyRx} color="#34d399" height={32} />
           </div>
-          <div className="flex-1 min-h-0">
-            <div className="flex items-center gap-1 text-sky-400 text-xs mb-1">
-              <ArrowUp size={12} /> TX
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="flex items-center gap-1 text-sky-400 text-[10px] mb-0.5">
+              <ArrowUp size={11} /> TX
             </div>
-            <Sparkline data={historyTx} color="#38bdf8" height={48} />
+            <Sparkline data={historyTx} color="#38bdf8" height={32} />
           </div>
         </div>
       )}
