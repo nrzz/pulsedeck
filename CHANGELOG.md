@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] — 2026-07-12
+
+### Added
+
+- Stocks / Crypto / Portfolio gear: **tap-to-toggle presets** including **Gold ETF (GLD)**, **Silver ETF (SLV)**, gold/silver futures, indices, and more coins (PAXG, XAUT)
+- Custom ticker / CoinGecko id field still works for anything else
+
+### Fixed
+
+- Stock quotes fall back to Yahoo when Finnhub misses a symbol (commodities / futures)
+- Typing `gold` / `silver` maps to GLD / SLV; watchlists and portfolio show the full list (scrollable)
+
 ## [1.0.4] — 2026-07-12
 
 ### Changed
@@ -87,7 +99,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grid drag/resize broken by CSS `transform` entrance animation on grid items
 - Packaged app crash from top-level `import.meta.url` in CJS server bundle
 
-[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.0.4...HEAD
+[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.0.5...HEAD
+[1.0.5]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.5
 [1.0.4]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.4
 [1.0.3]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.3
 [1.0.2]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.2

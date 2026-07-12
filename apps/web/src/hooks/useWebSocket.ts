@@ -89,19 +89,30 @@ async function bootstrapExternal(config: AppConfig) {
   const preset = config.presets.find((p) => p.id === config.activePresetId) ?? config.presets[0];
   const widgets = preset?.widgets ?? [];
 
+  type Holding = { symbol?: string; kind?: string };
+  const portfolioHoldings = widgets
+    .filter((w) => w.type === 'portfolio')
+    .flatMap((w) => (w.settings.holdings as Holding[]) || []);
+
   const cryptoIds = [
-    ...new Set(
-      widgets
+    ...new Set([
+      ...widgets
         .filter((w) => w.type === 'crypto')
         .flatMap((w) => (w.settings.symbols as string[]) || ['bitcoin', 'ethereum']),
-    ),
+      ...portfolioHoldings
+        .filter((h) => h.kind === 'crypto' && h.symbol)
+        .map((h) => String(h.symbol).toLowerCase()),
+    ]),
   ];
   const stockSymbols = [
-    ...new Set(
-      widgets
+    ...new Set([
+      ...widgets
         .filter((w) => w.type === 'stocks')
         .flatMap((w) => (w.settings.symbols as string[]) || ['AAPL', 'MSFT']),
-    ),
+      ...portfolioHoldings
+        .filter((h) => h.kind === 'stock' && h.symbol)
+        .map((h) => String(h.symbol)),
+    ]),
   ];
   const weatherCfg = widgets.find((w) => w.type === 'weather')?.settings as
     { lat?: number; lon?: number; city?: string } | undefined;
@@ -115,7 +126,7 @@ async function bootstrapExternal(config: AppConfig) {
 
   const tasks: Promise<void>[] = [];
 
-  if (cryptoIds.length || widgets.some((w) => w.type === 'crypto')) {
+  if (cryptoIds.length || widgets.some((w) => w.type === 'crypto' || w.type === 'portfolio')) {
     const ids = (cryptoIds.length ? cryptoIds : ['bitcoin', 'ethereum', 'solana']).join(',');
     tasks.push(
       fetch(`/api/crypto?ids=${encodeURIComponent(ids)}`)
@@ -127,7 +138,7 @@ async function bootstrapExternal(config: AppConfig) {
     );
   }
 
-  if (stockSymbols.length || widgets.some((w) => w.type === 'stocks')) {
+  if (stockSymbols.length || widgets.some((w) => w.type === 'stocks' || w.type === 'portfolio')) {
     const symbols = (stockSymbols.length ? stockSymbols : ['AAPL', 'MSFT']).join(',');
     tasks.push(
       fetch(`/api/stocks?symbols=${encodeURIComponent(symbols)}`)

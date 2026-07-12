@@ -1,4 +1,8 @@
 import { useMemo, useState } from 'react';
+import {
+  CRYPTO_WATCHLIST_OPTIONS,
+  normalizeCryptoId,
+} from '@pulsedeck/shared';
 import { WidgetShell } from '../../components/WidgetShell';
 import { Sparkline } from '../../components/Sparkline';
 import { useDashboard } from '../../store/dashboard';
@@ -9,70 +13,108 @@ export function CryptoWidget({ id, settings }: WidgetProps) {
   const crypto = useDashboard((s) => s.crypto);
   const updateWidgetSettings = useDashboard((s) => s.updateWidgetSettings);
   const symbols = useMemo(
-    () => (settings.symbols as string[]) || ['bitcoin', 'ethereum', 'solana'],
+    () =>
+      ((settings.symbols as string[]) || ['bitcoin', 'ethereum', 'solana']).map(normalizeCryptoId),
     [settings.symbols],
   );
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(symbols.join(', '));
+  const [custom, setCustom] = useState('');
 
   const list = useMemo(() => {
     if (!crypto.length) return [];
-    const order = new Map(symbols.map((s, i) => [s.toLowerCase(), i]));
+    const order = new Map(symbols.map((s, i) => [s, i]));
     return [...crypto]
       .filter(
         (c) =>
           order.has(c.id.toLowerCase()) ||
-          symbols.map((s) => s.toLowerCase()).includes(c.symbol.toLowerCase()),
+          symbols.includes(normalizeCryptoId(c.symbol)),
       )
       .sort((a, b) => (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99));
   }, [crypto, symbols]);
+
+  const save = (next: string[]) => {
+    const unique = [...new Set(next.map(normalizeCryptoId).filter(Boolean))];
+    updateWidgetSettings(id, { symbols: unique });
+  };
+
+  const toggle = (coinId: string) => {
+    const idNorm = normalizeCryptoId(coinId);
+    if (symbols.includes(idNorm)) save(symbols.filter((s) => s !== idNorm));
+    else save([...symbols, idNorm]);
+  };
 
   return (
     <WidgetShell
       id={id}
       title="Crypto"
-      onSettings={() => {
-        setDraft(symbols.join(', '));
-        setEditing((v) => !v);
-      }}
-      allowScroll={editing}
+      onSettings={() => setEditing((v) => !v)}
+      allowScroll
     >
       {editing ? (
-        <div className="space-y-2">
-          <p className="text-[11px] text-ink-muted">
-            CoinGecko IDs (e.g. bitcoin, ethereum, solana)
-          </p>
-          <textarea
-            className="input h-20 resize-none font-mono text-xs"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-          />
-          <button
-            type="button"
-            className="btn-accent w-full justify-center"
-            onClick={() => {
-              const next = draft
-                .split(',')
-                .map((s) => s.trim().toLowerCase())
-                .filter(Boolean);
-              updateWidgetSettings(id, { symbols: next });
-              setEditing(false);
-            }}
-          >
-            Save watchlist
+        <div className="space-y-2" data-no-drag>
+          <p className="text-[11px] text-ink-muted">Tap to add / remove · CoinGecko ids</p>
+          <div className="flex flex-wrap gap-1">
+            {CRYPTO_WATCHLIST_OPTIONS.map((opt) => {
+              const on = symbols.includes(opt.id);
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={`btn !py-0.5 !px-2 !text-[11px] !rounded-full ${
+                    on ? 'bg-accent/20 border-accent/40' : ''
+                  }`}
+                  onClick={() => toggle(opt.id)}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex gap-1">
+            <input
+              className="input !py-1 !text-xs flex-1 font-mono"
+              placeholder="Custom id (e.g. monero)"
+              value={custom}
+              onChange={(e) => setCustom(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter') return;
+                const idNorm = normalizeCryptoId(custom);
+                if (!idNorm) return;
+                if (!symbols.includes(idNorm)) save([...symbols, idNorm]);
+                setCustom('');
+              }}
+            />
+            <button
+              type="button"
+              className="btn !text-xs"
+              onClick={() => {
+                const idNorm = normalizeCryptoId(custom);
+                if (!idNorm) return;
+                if (!symbols.includes(idNorm)) save([...symbols, idNorm]);
+                setCustom('');
+              }}
+            >
+              Add
+            </button>
+          </div>
+          {symbols.length > 0 && (
+            <p className="text-[10px] text-ink-muted truncate">Watching: {symbols.join(', ')}</p>
+          )}
+          <button type="button" className="btn-accent w-full justify-center" onClick={() => setEditing(false)}>
+            Done
           </button>
         </div>
       ) : (
-        <div className="space-y-1.5 h-full min-h-0 overflow-hidden">
+        <div className="space-y-1.5 min-h-0">
           {!list.length && (
             <div className="text-sm text-ink-muted space-y-1">
               <div>{crypto.length ? 'No matching coins' : 'Loading quotes…'}</div>
-              {crypto.length > 0 && (
-                <div className="text-[10px]">Open gear and use CoinGecko ids (bitcoin, ethereum)</div>
-              )}
+              <button type="button" className="text-[10px] text-accent" onClick={() => setEditing(true)}>
+                Open gear · pick BTC, ETH, PAXG…
+              </button>
             </div>
           )}
-          {list.slice(0, 4).map((c) => (
+          {list.map((c) => (
             <div key={c.id} className="flex items-center gap-2 min-w-0">
               {c.image && <img src={c.image} alt="" className="w-4 h-4 rounded-full shrink-0" />}
               <div className="flex-1 min-w-0">
@@ -101,9 +143,6 @@ export function CryptoWidget({ id, settings }: WidgetProps) {
               </div>
             </div>
           ))}
-          {list.length > 4 && (
-            <div className="text-[10px] text-ink-muted">+{list.length - 4} more</div>
-          )}
         </div>
       )}
     </WidgetShell>

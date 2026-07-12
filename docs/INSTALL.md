@@ -9,7 +9,7 @@ PulseDeck is a **Windows desktop app**. Download the installer from GitHub Relea
 ## 1. Download
 
 1. Open **[Releases → Latest](https://github.com/nrzz/pulsedeck/releases/latest)**
-2. Download **`PulseDeck-Setup-x.x.x.exe`** (current: **1.0.4**)
+2. Download **`PulseDeck-Setup-x.x.x.exe`** (current: **1.0.5**)
 3. Double-click the file and follow the installer
 4. Launch **PulseDeck** from the Start menu or desktop shortcut
 
@@ -120,4 +120,5 @@ Still stuck? [Open an issue](https://github.com/nrzz/pulsedeck/issues) with Wind
 ## Building from source?
 
 For contributors only — see [CONTRIBUTING.md](../CONTRIBUTING.md).
+
 

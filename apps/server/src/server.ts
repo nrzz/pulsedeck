@@ -99,8 +99,24 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
 
   async function broadcastCrypto() {
     const cryptoWidgets = extractSettings<{ symbols?: string[] }>('crypto');
-    const ids = [...new Set(cryptoWidgets.flatMap((s) => s.symbols ?? ['bitcoin', 'ethereum']))];
-    if (!ids.length && !getActiveWidgets().some((w) => w.type === 'crypto')) return;
+    const portfolio = extractSettings<{ holdings?: Array<{ symbol: string; kind: string }> }>(
+      'portfolio',
+    );
+    const fromPortfolio = portfolio.flatMap((s) =>
+      (s.holdings ?? []).filter((h) => h.kind === 'crypto').map((h) => h.symbol.toLowerCase()),
+    );
+    const ids = [
+      ...new Set([
+        ...cryptoWidgets.flatMap((s) => s.symbols ?? ['bitcoin', 'ethereum']),
+        ...fromPortfolio,
+      ]),
+    ];
+    if (
+      !ids.length &&
+      !getActiveWidgets().some((w) => w.type === 'crypto' || w.type === 'portfolio')
+    ) {
+      return;
+    }
     try {
       const quotes = await fetchCrypto(ids.length ? ids : ['bitcoin', 'ethereum']);
       hub.broadcast({ type: 'crypto', payload: quotes });
@@ -111,10 +127,24 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
 
   async function broadcastStocks() {
     const stockWidgets = extractSettings<{ symbols?: string[] }>('stocks');
+    const portfolio = extractSettings<{ holdings?: Array<{ symbol: string; kind: string }> }>(
+      'portfolio',
+    );
+    const fromPortfolio = portfolio.flatMap((s) =>
+      (s.holdings ?? []).filter((h) => h.kind === 'stock').map((h) => h.symbol),
+    );
     const symbols = [
-      ...new Set(stockWidgets.flatMap((s) => s.symbols ?? ['AAPL', 'MSFT', 'GOOGL'])),
+      ...new Set([
+        ...stockWidgets.flatMap((s) => s.symbols ?? ['AAPL', 'MSFT', 'GOOGL']),
+        ...fromPortfolio,
+      ]),
     ];
-    if (!getActiveWidgets().some((w) => w.type === 'stocks')) return;
+    if (
+      !symbols.length &&
+      !getActiveWidgets().some((w) => w.type === 'stocks' || w.type === 'portfolio')
+    ) {
+      return;
+    }
     try {
       const quotes = await fetchStocks(
         symbols.length ? symbols : ['AAPL', 'MSFT'],

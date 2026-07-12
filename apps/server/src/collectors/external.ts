@@ -1,5 +1,5 @@
 import type { CryptoQuote, NewsFeedResult, NewsItem, StockQuote, WeatherData } from '@pulsedeck/shared';
-import { NEWS_TOPICS } from '@pulsedeck/shared';
+import { NEWS_TOPICS, normalizeStockSymbol } from '@pulsedeck/shared';
 
 export async function fetchCrypto(ids: string[]): Promise<CryptoQuote[]> {
   if (!ids.length) return [];
@@ -36,46 +36,43 @@ export async function fetchCrypto(ids: string[]): Promise<CryptoQuote[]> {
 
 export async function fetchStocks(symbols: string[], apiKey?: string): Promise<StockQuote[]> {
   if (!symbols.length) return [];
+  const unique = [...new Set(symbols.map(normalizeStockSymbol).filter(Boolean))];
 
-  // Prefer Finnhub when key is present; fall back to Yahoo unofficial chart API
-  if (apiKey) {
-    const results = await Promise.all(
-      symbols.map(async (symbol) => {
+  const results = await Promise.all(
+    unique.map(async (symbol) => {
+      if (apiKey) {
         try {
           const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`;
           const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-          if (!res.ok) return null;
-          const q = (await res.json()) as {
-            c: number;
-            d: number;
-            dp: number;
-            h: number;
-            l: number;
-            o: number;
-            pc: number;
-          };
-          if (!q.c) return null;
-          return {
-            symbol: symbol.toUpperCase(),
-            price: q.c,
-            change: q.d,
-            changePercent: q.dp,
-            high: q.h,
-            low: q.l,
-            open: q.o,
-            previousClose: q.pc,
-          } satisfies StockQuote;
+          if (res.ok) {
+            const q = (await res.json()) as {
+              c: number;
+              d: number;
+              dp: number;
+              h: number;
+              l: number;
+              o: number;
+              pc: number;
+            };
+            if (q.c) {
+              return {
+                symbol,
+                price: q.c,
+                change: q.d,
+                changePercent: q.dp,
+                high: q.h,
+                low: q.l,
+                open: q.o,
+                previousClose: q.pc,
+              } satisfies StockQuote;
+            }
+          }
         } catch {
-          return null;
+          /* fall through to Yahoo */
         }
-      }),
-    );
-    return results.filter((r): r is StockQuote => r !== null);
-  }
+      }
 
-  // Yahoo Finance chart endpoint (no key)
-  const results = await Promise.all(
-    symbols.map(async (symbol) => {
+      // Yahoo covers ETFs, futures (GC=F / SI=F), and tickers Finnhub misses
       try {
         const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`;
         const res = await fetch(url, {
@@ -102,7 +99,7 @@ export async function fetchStocks(symbols: string[], apiKey?: string): Promise<S
         const change = meta.regularMarketPrice - prev;
         const changePercent = prev ? (change / prev) * 100 : 0;
         return {
-          symbol: symbol.toUpperCase(),
+          symbol,
           price: meta.regularMarketPrice,
           change: Math.round(change * 100) / 100,
           changePercent: Math.round(changePercent * 100) / 100,

@@ -1,6 +1,6 @@
 {
   "name": "@pulsedeck/server",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -37,6 +37,7 @@
     "typescript": "^5.7.2"
   }
 }
+
 
 
 

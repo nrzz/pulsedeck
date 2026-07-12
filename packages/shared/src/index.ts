@@ -207,6 +207,92 @@ export interface StockQuote {
   previousClose: number;
 }
 
+/** Quick-pick tickers for Stocks / Portfolio gear (Yahoo-compatible). */
+export const STOCK_WATCHLIST_OPTIONS = [
+  { id: 'AAPL', label: 'AAPL' },
+  { id: 'MSFT', label: 'MSFT' },
+  { id: 'GOOGL', label: 'GOOGL' },
+  { id: 'AMZN', label: 'AMZN' },
+  { id: 'META', label: 'META' },
+  { id: 'NVDA', label: 'NVDA' },
+  { id: 'TSLA', label: 'TSLA' },
+  { id: 'AMD', label: 'AMD' },
+  { id: 'NFLX', label: 'NFLX' },
+  { id: 'SPY', label: 'SPY' },
+  { id: 'QQQ', label: 'QQQ' },
+  { id: 'DIA', label: 'DIA' },
+  { id: 'IWM', label: 'IWM' },
+  { id: 'GLD', label: 'Gold ETF' },
+  { id: 'SLV', label: 'Silver ETF' },
+  { id: 'GC=F', label: 'Gold fut' },
+  { id: 'SI=F', label: 'Silver fut' },
+  { id: 'USO', label: 'Oil ETF' },
+  { id: 'UNG', label: 'NatGas' },
+  { id: 'COIN', label: 'COIN' },
+  { id: 'MSTR', label: 'MSTR' },
+  { id: 'JPM', label: 'JPM' },
+  { id: 'V', label: 'V' },
+  { id: 'BRK-B', label: 'BRK-B' },
+  { id: 'INFY', label: 'INFY' },
+  { id: 'TSM', label: 'TSM' },
+] as const;
+
+/** Quick-pick CoinGecko ids for Crypto / Portfolio gear. */
+export const CRYPTO_WATCHLIST_OPTIONS = [
+  { id: 'bitcoin', label: 'BTC' },
+  { id: 'ethereum', label: 'ETH' },
+  { id: 'solana', label: 'SOL' },
+  { id: 'ripple', label: 'XRP' },
+  { id: 'cardano', label: 'ADA' },
+  { id: 'dogecoin', label: 'DOGE' },
+  { id: 'polkadot', label: 'DOT' },
+  { id: 'chainlink', label: 'LINK' },
+  { id: 'avalanche-2', label: 'AVAX' },
+  { id: 'binancecoin', label: 'BNB' },
+  { id: 'toncoin', label: 'TON' },
+  { id: 'tron', label: 'TRX' },
+  { id: 'litecoin', label: 'LTC' },
+  { id: 'bitcoin-cash', label: 'BCH' },
+  { id: 'pax-gold', label: 'PAXG' },
+  { id: 'tether-gold', label: 'XAUT' },
+] as const;
+
+const STOCK_SYMBOL_ALIASES: Record<string, string> = {
+  GOLD: 'GLD',
+  XAU: 'GLD',
+  XAUUSD: 'GLD',
+  SILVER: 'SLV',
+  XAG: 'SLV',
+  XAGUSD: 'SLV',
+  BRK_B: 'BRK-B',
+  'BRK.B': 'BRK-B',
+};
+
+/** Normalize free-typed tickers (gold → GLD, etc.) for Yahoo / Finnhub. */
+export function normalizeStockSymbol(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  const upper = trimmed.toUpperCase();
+  return STOCK_SYMBOL_ALIASES[upper] ?? upper;
+}
+
+export function normalizeCryptoId(raw: string): string {
+  const trimmed = raw.trim().toLowerCase();
+  if (!trimmed) return '';
+  const aliases: Record<string, string> = {
+    btc: 'bitcoin',
+    eth: 'ethereum',
+    sol: 'solana',
+    xrp: 'ripple',
+    ada: 'cardano',
+    doge: 'dogecoin',
+    gold: 'pax-gold',
+    paxg: 'pax-gold',
+    xaut: 'tether-gold',
+  };
+  return aliases[trimmed] ?? trimmed;
+}
+
 export interface WeatherData {
   latitude: number;
   longitude: number;

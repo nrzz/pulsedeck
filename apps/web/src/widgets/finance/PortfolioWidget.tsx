@@ -1,5 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
+import {
+  CRYPTO_WATCHLIST_OPTIONS,
+  STOCK_WATCHLIST_OPTIONS,
+  normalizeCryptoId,
+  normalizeStockSymbol,
+} from '@pulsedeck/shared';
 import { WidgetShell } from '../../components/WidgetShell';
 import { useDashboard } from '../../store/dashboard';
 import { formatPrice } from '../../lib/utils';
@@ -15,7 +21,7 @@ export function PortfolioWidget({ id, settings }: WidgetProps) {
   const [editing, setEditing] = useState(false);
   const [symbol, setSymbol] = useState('');
   const [amount, setAmount] = useState('1');
-  const [kind, setKind] = useState<'stock' | 'crypto'>('crypto');
+  const [kind, setKind] = useState<'stock' | 'crypto'>('stock');
 
   const save = (next: Holding[]) => updateWidgetSettings(id, { holdings: next });
 
@@ -23,12 +29,15 @@ export function PortfolioWidget({ id, settings }: WidgetProps) {
     return holdings.map((h) => {
       let price = 0;
       if (h.kind === 'stock') {
-        price = stocks.find((s) => s.symbol.toUpperCase() === h.symbol.toUpperCase())?.price ?? 0;
+        const want = normalizeStockSymbol(h.symbol);
+        price =
+          stocks.find((s) => normalizeStockSymbol(s.symbol) === want)?.price ?? 0;
       } else {
+        const want = normalizeCryptoId(h.symbol);
         const c = crypto.find(
           (c) =>
-            c.id.toLowerCase() === h.symbol.toLowerCase() ||
-            c.symbol.toLowerCase() === h.symbol.toLowerCase(),
+            c.id.toLowerCase() === want ||
+            normalizeCryptoId(c.symbol) === want,
         );
         price = c?.price ?? 0;
       }
@@ -38,14 +47,20 @@ export function PortfolioWidget({ id, settings }: WidgetProps) {
   }, [holdings, crypto, stocks]);
 
   const total = rows.reduce((sum, r) => sum + r.value, 0);
-  const shown = rows.slice(0, 5);
-  const more = rows.length - shown.length;
+
+  const addHolding = (raw: string, amt: number, k: 'stock' | 'crypto') => {
+    const sym = k === 'stock' ? normalizeStockSymbol(raw) : normalizeCryptoId(raw);
+    if (!sym || !Number.isFinite(amt) || amt <= 0) return;
+    save([...holdings, { symbol: sym, amount: amt, kind: k }]);
+  };
+
+  const options = kind === 'stock' ? STOCK_WATCHLIST_OPTIONS : CRYPTO_WATCHLIST_OPTIONS;
 
   return (
     <WidgetShell
       id={id}
       title="Portfolio"
-      allowScroll={editing}
+      allowScroll
       onSettings={() => setEditing((v) => !v)}
     >
       {editing ? (
@@ -64,22 +79,8 @@ export function PortfolioWidget({ id, settings }: WidgetProps) {
               </button>
             </div>
           ))}
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              className="input !text-xs"
-              placeholder="Symbol / id"
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value)}
-            />
-            <input
-              className="input !text-xs"
-              placeholder="Amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
-          </div>
           <div className="flex gap-2">
-            {(['crypto', 'stock'] as const).map((k) => (
+            {(['stock', 'crypto'] as const).map((k) => (
               <button
                 key={k}
                 type="button"
@@ -90,13 +91,40 @@ export function PortfolioWidget({ id, settings }: WidgetProps) {
               </button>
             ))}
           </div>
+          <div className="flex flex-wrap gap-1 max-h-28 overflow-y-auto">
+            {options.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                className="btn !py-0.5 !px-2 !text-[11px] !rounded-full"
+                onClick={() => {
+                  const amt = Number(amount) || 1;
+                  addHolding(opt.id, amt, kind);
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              className="input !text-xs font-mono"
+              placeholder={kind === 'stock' ? 'Ticker / gold / GC=F' : 'CoinGecko id'}
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value)}
+            />
+            <input
+              className="input !text-xs"
+              placeholder="Amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
           <button
             type="button"
             className="btn w-full justify-center"
             onClick={() => {
-              const amt = Number(amount);
-              if (!symbol.trim() || !Number.isFinite(amt) || amt <= 0) return;
-              save([...holdings, { symbol: symbol.trim(), amount: amt, kind }]);
+              addHolding(symbol, Number(amount), kind);
               setSymbol('');
               setAmount('1');
             }}
@@ -112,10 +140,10 @@ export function PortfolioWidget({ id, settings }: WidgetProps) {
           Add holdings…
         </button>
       ) : (
-        <div className="space-y-2 overflow-hidden h-full min-h-0">
+        <div className="space-y-2 min-h-0">
           <div className="text-lg font-mono font-semibold tabular-nums">${formatPrice(total)}</div>
-          <div className="space-y-1.5 max-h-full overflow-hidden">
-            {shown.map((r) => (
+          <div className="space-y-1.5">
+            {rows.map((r) => (
               <div key={`${r.kind}-${r.symbol}`} className="flex justify-between text-xs gap-2">
                 <div className="min-w-0 truncate">
                   <span className="font-medium">{r.symbol}</span>
@@ -126,7 +154,6 @@ export function PortfolioWidget({ id, settings }: WidgetProps) {
                 </span>
               </div>
             ))}
-            {more > 0 && <div className="text-[10px] text-ink-muted">+{more} more</div>}
           </div>
         </div>
       )}
