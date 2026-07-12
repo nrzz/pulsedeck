@@ -251,14 +251,13 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
     options.webDistPath,
     process.env.PULSEDECK_WEB_DIST,
     path.resolve(process.cwd(), 'apps', 'web', 'dist'),
-    path.resolve(process.cwd(), 'dist'),
     // npm start -w @pulsedeck/server runs with cwd=apps/server
     path.resolve(process.cwd(), '..', 'web', 'dist'),
     // relative to this file: apps/server/dist → apps/web/dist
     path.resolve(here, '..', '..', 'web', 'dist'),
   ].filter((p): p is string => Boolean(p));
 
-  const webDist = webDistCandidates.find((p) => fs.existsSync(p));
+  const webDist = webDistCandidates.find((p) => fs.existsSync(path.join(p, 'index.html')));
 
   if (webDist) {
     await app.register(fastifyStatic, { root: webDist });
