@@ -25,7 +25,7 @@
     "bundle:server": "node scripts/bundle-server.mjs",
     "start": "npm run start -w @pulsedeck/server",
     "dist": "npm run build && npm run dist -w @pulsedeck/desktop",
-    "typecheck": "npm run typecheck -w @pulsedeck/shared && npm run typecheck -w @pulsedeck/server && npm run typecheck -w @pulsedeck/web && npm run typecheck -w @pulsedeck/desktop",
+    "typecheck": "npm run build -w @pulsedeck/shared && npm run typecheck -w @pulsedeck/shared && npm run typecheck -w @pulsedeck/server && npm run typecheck -w @pulsedeck/web && npm run typecheck -w @pulsedeck/desktop",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,css}\"",
