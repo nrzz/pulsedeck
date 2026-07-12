@@ -38,7 +38,7 @@ export function WorldClocksWidget({ id, settings }: WidgetProps) {
 
   return (
     <WidgetShell id={id} title="World Clocks">
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-hidden">
         {timezones.map((tz) => {
           const f = formatInZone(now, tz);
           return (

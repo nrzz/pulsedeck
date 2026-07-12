@@ -26,21 +26,21 @@ export function GpuWidget({ id }: WidgetProps) {
 
   return (
     <WidgetShell id={id} title="GPU">
-      <div className="flex gap-4 h-full items-center">
-        <ProgressRing value={gpu.utilization} label="util" color="#f472b6" />
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium truncate mb-1">{gpu.model}</div>
+      <div className="flex gap-2.5 h-full items-center min-h-0 overflow-hidden">
+        <ProgressRing value={gpu.utilization} label="util" color="#f472b6" size={56} stroke={6} />
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <div className="text-sm font-medium truncate mb-0.5">{gpu.model}</div>
           {memPct != null && (
-            <div className="text-xs text-ink-muted mb-2">
+            <div className="text-[10px] text-ink-muted mb-1 truncate tabular-nums">
               VRAM {formatBytes((gpu.memoryUsed || 0) * 1024 * 1024)} /{' '}
               {formatBytes((gpu.memoryTotal || 0) * 1024 * 1024)} ({memPct.toFixed(0)}%)
             </div>
           )}
           {gpu.temperature != null && (
-            <div className="text-xs font-mono text-ink-muted">{gpu.temperature}°C</div>
+            <div className="text-[11px] font-mono text-ink-muted">{gpu.temperature}°C</div>
           )}
           {gpus.length > 1 && (
-            <div className="text-[10px] text-ink-muted mt-1">+{gpus.length - 1} more GPU(s)</div>
+            <div className="text-[10px] text-ink-muted mt-0.5">+{gpus.length - 1} more GPU(s)</div>
           )}
         </div>
       </div>

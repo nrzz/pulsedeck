@@ -19,7 +19,7 @@ export function NetAdaptersWidget({ id }: WidgetProps) {
       ) : ifaces.length === 0 ? (
         <div className="text-sm text-ink-muted">No adapters</div>
       ) : (
-        <div className="space-y-2 overflow-auto max-h-full">
+        <div className="space-y-2 max-h-full overflow-hidden">
           {ifaces.map((n) => (
             <div key={n.iface} className="rounded-lg bg-surface-3/40 p-2 text-xs">
               <div className="flex justify-between items-center gap-2 mb-1">

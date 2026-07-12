@@ -252,7 +252,25 @@ body {
   }
 
   .metric-value {
-    @apply font-mono text-3xl font-semibold tracking-tight;
+    @apply font-mono text-xl font-semibold tracking-tight tabular-nums;
+  }
+
+  .widget-body {
+    overscroll-behavior: none;
+  }
+
+  /* Live metrics: no scrollbars. Gear panels use .widget-body-scroll */
+  .react-grid-item .widget-body:not(.widget-body-scroll),
+  .shell-widget .widget-body:not(.widget-body-scroll) {
+    overflow: hidden !important;
+    scrollbar-width: none;
+  }
+
+  .react-grid-item .widget-body:not(.widget-body-scroll)::-webkit-scrollbar,
+  .shell-widget .widget-body:not(.widget-body-scroll)::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
   }
 
   .btn {

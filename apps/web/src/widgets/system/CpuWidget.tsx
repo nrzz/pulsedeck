@@ -18,25 +18,27 @@ export function CpuWidget({ id }: WidgetProps) {
       {!metrics ? (
         <WidgetSkeleton label="Loading CPU" />
       ) : (
-        <div className="flex gap-3 sm:gap-4 h-full min-h-0">
-          <div className="flex flex-col items-center justify-center gap-1 shrink-0">
-          <ProgressRing value={load} label="load" size={72} stroke={7} />
+        <div className="flex gap-2.5 h-full min-h-0 items-center overflow-hidden">
+          <div className="flex flex-col items-center justify-center gap-0.5 shrink-0">
+            <ProgressRing value={load} label="load" size={56} stroke={6} />
             {temp != null && (
-              <span className="text-xs text-ink-muted font-mono">{temp.toFixed(0)}°C</span>
+              <span className="text-[10px] text-ink-muted font-mono">{temp.toFixed(0)}°C</span>
             )}
           </div>
-          <div className="flex-1 min-w-0 flex flex-col justify-center">
-            <Sparkline data={history} color="#2dd4bf" height={36} />
-            <div className="mt-2 grid grid-cols-4 gap-1">
+          <div className="flex-1 min-w-0 min-h-0 flex flex-col justify-center overflow-hidden">
+            <Sparkline data={history} color="#2dd4bf" height={28} />
+            <div className="mt-1.5 grid grid-cols-4 gap-0.5">
               {cores.slice(0, 8).map((c, i) => (
-                <div key={i} className="text-center">
+                <div key={i} className="text-center min-w-0">
                   <div className="h-1 rounded-full bg-surface-3 overflow-hidden">
                     <div
                       className="h-full rounded-full bg-accent"
                       style={{ width: `${Math.min(100, c)}%` }}
                     />
                   </div>
-                  <span className="text-[9px] text-ink-muted font-mono tabular-nums">{c.toFixed(0)}</span>
+                  <span className="text-[9px] text-ink-muted font-mono tabular-nums leading-none">
+                    {c.toFixed(0)}
+                  </span>
                 </div>
               ))}
             </div>

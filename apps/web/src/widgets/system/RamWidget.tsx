@@ -18,14 +18,14 @@ export function RamWidget({ id }: WidgetProps) {
       {!ready ? (
         <WidgetSkeleton label="Loading memory" />
       ) : (
-        <div className="flex gap-3 sm:gap-4 h-full items-center min-h-0">
-          <ProgressRing value={mem.percent} label="used" color="#34d399" size={72} stroke={7} />
-          <div className="flex-1 min-w-0">
-            <div className="metric-value text-xl mb-0.5 tabular-nums">{formatBytes(mem.used)}</div>
-            <div className="text-[11px] text-ink-muted mb-2 tabular-nums">
+        <div className="flex gap-2.5 h-full items-center min-h-0 overflow-hidden">
+          <ProgressRing value={mem.percent} label="used" color="#34d399" size={56} stroke={6} />
+          <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
+            <div className="metric-value text-lg mb-0.5">{formatBytes(mem.used)}</div>
+            <div className="text-[10px] text-ink-muted mb-1.5 tabular-nums truncate">
               of {formatBytes(mem.total)} · {formatBytes(mem.free)} free
             </div>
-            <Sparkline data={history} color="#34d399" height={32} />
+            <Sparkline data={history} color="#34d399" height={24} />
           </div>
         </div>
       )}

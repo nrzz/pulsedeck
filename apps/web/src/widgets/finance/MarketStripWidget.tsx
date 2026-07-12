@@ -44,7 +44,7 @@ export function MarketStripWidget({ id }: WidgetProps) {
       {!items.length ? (
         <div className="text-sm text-ink-muted">Loading quotes…</div>
       ) : (
-        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-thin">
+        <div className="flex gap-3 overflow-hidden pb-0.5">
           {items.map((item) => (
             <div
               key={item.key}

@@ -12,6 +12,8 @@ interface WidgetShellProps {
   onSettings?: () => void;
   /** Tint card when a threshold is exceeded */
   alert?: boolean;
+  /** Only for gear/config panels — live metrics never scroll */
+  allowScroll?: boolean;
 }
 
 export function WidgetShell({
@@ -22,6 +24,7 @@ export function WidgetShell({
   actions,
   onSettings,
   alert,
+  allowScroll,
 }: WidgetShellProps) {
   const editMode = useDashboard((s) => s.editMode);
   const removeWidget = useDashboard((s) => s.removeWidget);
@@ -31,8 +34,8 @@ export function WidgetShell({
   return (
     <div
       className={cn(
-        'glass-card group/card h-full flex flex-col relative',
-        density === 'compact' ? 'p-3' : density === 'spacious' ? 'p-5' : 'p-4',
+        'glass-card group/card h-full flex flex-col relative overflow-hidden',
+        density === 'compact' ? 'p-2.5' : density === 'spacious' ? 'p-4' : 'p-3',
         editMode && 'edit-widget ring-1 ring-accent/30 hover:ring-accent/60',
         alert && 'ring-1 ring-amber-400/50 bg-amber-500/[0.06]',
         className,
@@ -52,21 +55,21 @@ export function WidgetShell({
 
       <div
         className={cn(
-          'widget-drag-region flex items-center gap-2 mb-3 shrink-0 relative z-[1] min-h-[28px]',
+          'widget-drag-region flex items-center gap-2 mb-1.5 shrink-0 relative z-[1] min-h-[22px]',
           editMode &&
-            '-mx-1 px-1 py-1 rounded-xl cursor-grab active:cursor-grabbing select-none hover:bg-white/[0.04]',
+            '-mx-1 px-1 py-0.5 rounded-xl cursor-grab active:cursor-grabbing select-none hover:bg-white/[0.04]',
           !showTitles && !editMode && !actions && !onSettings && 'sr-only',
         )}
         data-testid="widget-drag-handle"
       >
         {editMode && (
           <span className="text-accent shrink-0" aria-hidden>
-            <GripVertical size={18} />
+            <GripVertical size={16} />
           </span>
         )}
         <h3 className={cn('widget-title flex-1 truncate', !showTitles && 'sr-only')}>{title}</h3>
         <div
-          className="flex items-center gap-1 shrink-0"
+          className="flex items-center gap-0.5 shrink-0"
           data-no-drag
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
@@ -98,7 +101,15 @@ export function WidgetShell({
           )}
         </div>
       </div>
-      <div className="flex-1 min-h-0 overflow-auto relative z-[1]">{children}</div>
+      {/* Live widgets clip — never show scrollbars. allowScroll only for gear panels. */}
+      <div
+        className={cn(
+          'widget-body flex-1 min-h-0 relative z-[1]',
+          allowScroll ? 'widget-body-scroll overflow-y-auto' : 'overflow-hidden',
+        )}
+      >
+        {children}
+      </div>
     </div>
   );
 }

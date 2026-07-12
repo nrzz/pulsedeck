@@ -137,7 +137,12 @@ export function WeatherWidget({ id, settings }: WidgetProps) {
   }
 
   return (
-    <WidgetShell id={id} title="Weather" onSettings={() => setEditing((v) => !v)}>
+    <WidgetShell
+      id={id}
+      title="Weather"
+      onSettings={() => setEditing((v) => !v)}
+      allowScroll={editing}
+    >
       {body}
     </WidgetShell>
   );

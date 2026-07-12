@@ -31,7 +31,7 @@ export function ClipboardWidget({ id, settings }: WidgetProps) {
         {history.length === 0 ? (
           <div className="text-sm text-ink-muted">No clipboard history</div>
         ) : (
-          <div className="space-y-1 max-h-full overflow-auto">
+          <div className="space-y-1 max-h-full overflow-hidden">
             {history.map((item, i) => (
               <div
                 key={i}

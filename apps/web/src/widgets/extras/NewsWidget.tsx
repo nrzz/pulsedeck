@@ -292,8 +292,8 @@ export function NewsWidget({ id, settings }: WidgetProps) {
     );
   } else {
     body = (
-      <ul className={compact ? 'space-y-1.5' : 'space-y-2.5'}>
-        {news.map((item, i) => (
+      <ul className={`h-full min-h-0 overflow-hidden ${compact ? 'space-y-1' : 'space-y-1.5'}`}>
+        {news.slice(0, compact ? 5 : 6).map((item, i) => (
           <li key={`${item.link || item.title}-${i}`} className="min-w-0">
             {item.link ? (
               <a
@@ -329,6 +329,7 @@ export function NewsWidget({ id, settings }: WidgetProps) {
       id={id}
       title="News"
       onSettings={() => setEditing((v) => !v)}
+      allowScroll={editing}
       actions={
         <button
           type="button"

@@ -44,7 +44,7 @@ export function TodoWidget({ id, settings }: WidgetProps) {
             <Plus size={14} />
           </button>
         </div>
-        <div className="flex-1 overflow-auto space-y-1">
+        <div className="flex-1 overflow-hidden space-y-1">
           {items.length === 0 && <div className="text-sm text-ink-muted">No tasks yet</div>}
           {items.map((t) => (
             <div key={t.id} className="flex items-center gap-2 group text-sm">

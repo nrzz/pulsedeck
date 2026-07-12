@@ -13,7 +13,8 @@ export function ProcessesWidget({ id, settings }: WidgetProps) {
   const processes = useDashboard((s) => s.metrics?.processes ?? EMPTY_PROCS);
   const updateWidgetSettings = useDashboard((s) => s.updateWidgetSettings);
   const [sortBy, setSortBy] = useState<'cpu' | 'mem'>((settings.sortBy as 'cpu' | 'mem') || 'cpu');
-  const limit = Number(settings.limit ?? 8);
+  // Cap hard at 6 so a standard tile never needs a scrollbar
+  const limit = Math.min(6, Math.max(3, Number(settings.limit ?? 5)));
 
   const sorted = useMemo(() => {
     const list = [...processes];
@@ -31,11 +32,11 @@ export function ProcessesWidget({ id, settings }: WidgetProps) {
       id={id}
       title="Processes"
       actions={
-        <div className="flex gap-1 text-[10px]">
+        <div className="flex gap-0.5 text-[10px]">
           <button
             type="button"
             className={cn(
-              'px-2 py-0.5 rounded-lg',
+              'px-1.5 py-0.5 rounded-md',
               sortBy === 'cpu' ? 'bg-accent/30 text-ink' : 'text-ink-muted',
             )}
             onClick={() => toggle('cpu')}
@@ -45,7 +46,7 @@ export function ProcessesWidget({ id, settings }: WidgetProps) {
           <button
             type="button"
             className={cn(
-              'px-2 py-0.5 rounded-lg',
+              'px-1.5 py-0.5 rounded-md',
               sortBy === 'mem' ? 'bg-accent/30 text-ink' : 'text-ink-muted',
             )}
             onClick={() => toggle('mem')}
@@ -58,28 +59,30 @@ export function ProcessesWidget({ id, settings }: WidgetProps) {
       {!metrics ? (
         <WidgetSkeleton label="Loading processes" />
       ) : (
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="text-ink-muted text-left">
-              <th className="pb-2 font-medium">Name</th>
-              <th className="pb-2 font-medium text-right">CPU</th>
-              <th className="pb-2 font-medium text-right">RAM</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((p) => (
-              <tr key={`${p.pid}-${p.name}`} className="border-t border-white/5">
-                <td className="py-1.5 truncate max-w-[140px]" title={`${p.name} (${p.pid})`}>
-                  {p.name}
-                </td>
-                <td className="py-1.5 text-right font-mono">{p.cpu.toFixed(1)}%</td>
-                <td className="py-1.5 text-right font-mono">
-                  {p.memRss ? formatBytes(p.memRss * 1024) : `${p.mem.toFixed(1)}%`}
-                </td>
+        <div className="h-full min-h-0 overflow-hidden">
+          <table className="w-full text-[11px] table-fixed">
+            <thead>
+              <tr className="text-ink-muted text-left">
+                <th className="pb-1 font-medium w-[46%]">Name</th>
+                <th className="pb-1 font-medium text-right w-[27%]">CPU</th>
+                <th className="pb-1 font-medium text-right w-[27%]">RAM</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {sorted.map((p) => (
+                <tr key={`${p.pid}-${p.name}`} className="border-t border-white/5">
+                  <td className="py-0.5 truncate pr-1" title={`${p.name} (${p.pid})`}>
+                    {p.name}
+                  </td>
+                  <td className="py-0.5 text-right font-mono tabular-nums">{p.cpu.toFixed(1)}%</td>
+                  <td className="py-0.5 text-right font-mono tabular-nums">
+                    {p.memRss ? formatBytes(p.memRss * 1024) : `${p.mem.toFixed(1)}%`}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </WidgetShell>
   );

@@ -101,7 +101,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     category: 'system',
     description: 'Top processes by CPU/RAM',
     defaultSize: { w: 4, h: 4, minW: 3, minH: 3 },
-    defaultSettings: { sortBy: 'cpu', limit: 8 },
+    defaultSettings: { sortBy: 'cpu', limit: 5 },
     component: ProcessesWidget,
   },
   battery: {
@@ -174,7 +174,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     category: 'system',
     description: 'Processes by RAM',
     defaultSize: { w: 4, h: 4, minW: 3, minH: 3 },
-    defaultSettings: { limit: 8 },
+    defaultSettings: { limit: 5 },
     component: TopMemoryWidget,
   },
   sensors: {
