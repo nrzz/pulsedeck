@@ -11,6 +11,7 @@ import { useDashboard } from './store/dashboard';
 import { useToast } from './store/toast';
 import { isWidgetShell } from './lib/shell';
 import { cn } from './lib/utils';
+import { scaleLayoutFrom12 } from './lib/layout';
 
 export default function App() {
   useWebSocket();
@@ -46,8 +47,18 @@ export default function App() {
   const applyPack = async (packId: string) => {
     const pack = createNamedPresets().find((p) => p.id === packId);
     if (!pack) return;
+    const cols = config.shell?.gridCols ?? 12;
+    const adapted = {
+      ...pack,
+      layout: scaleLayoutFrom12(pack.layout, cols),
+    };
     const others = config.presets.filter((p) => p.id !== pack.id);
-    const next = { ...config, presets: [...others, pack], activePresetId: pack.id };
+    const next = {
+      ...config,
+      presets: [...others, adapted],
+      activePresetId: pack.id,
+      shell: { ...config.shell, gridCols: cols },
+    };
     setConfig(next);
     try {
       await persistConfig(next);

@@ -39,15 +39,19 @@ export function StopwatchWidget({ id }: WidgetProps) {
 
   return (
     <WidgetShell id={id} title="Stopwatch">
-      <div className="flex flex-col items-center justify-center h-full gap-3">
-        <div className="font-mono text-3xl font-semibold tabular-nums tracking-tight">
+      <div className="flex flex-col items-center justify-center h-full min-h-0 gap-2 overflow-hidden">
+        <div className="font-mono text-xl font-semibold tabular-nums tracking-tight leading-none">
           {formatElapsed(elapsed)}
         </div>
-        <div className="flex gap-2">
-          <button type="button" className="btn-accent px-4" onClick={() => setRunning((v) => !v)}>
+        <div className="flex gap-1.5">
+          <button
+            type="button"
+            className="btn-accent !px-3 !py-1 !text-xs"
+            onClick={() => setRunning((v) => !v)}
+          >
             {running ? 'Pause' : 'Start'}
           </button>
-          <button type="button" className="btn" onClick={reset}>
+          <button type="button" className="btn !px-3 !py-1 !text-xs" onClick={reset}>
             Reset
           </button>
         </div>

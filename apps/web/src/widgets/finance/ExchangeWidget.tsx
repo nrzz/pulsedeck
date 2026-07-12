@@ -53,19 +53,22 @@ export function ExchangeWidget({ id, settings }: WidgetProps) {
 
   return (
     <WidgetShell id={id} title="Exchange">
-      <div className="space-y-2">
+      <div className="space-y-2 overflow-hidden h-full min-h-0">
         {!rates?.length && loading && (
           <div className="text-sm text-ink-muted">Loading FX…</div>
         )}
         {!rates?.length && !loading && (
           <div className="text-sm text-ink-muted">No rates available</div>
         )}
-        {rates?.map((r) => (
-          <div key={r.pair} className="flex justify-between items-center text-sm">
-            <span className="font-medium">{r.pair}</span>
-            <span className="font-mono tabular-nums">{formatPrice(r.rate)}</span>
+        {rates?.slice(0, 5).map((r) => (
+          <div key={r.pair} className="flex justify-between items-center text-sm gap-2">
+            <span className="font-medium truncate">{r.pair}</span>
+            <span className="font-mono tabular-nums shrink-0">{formatPrice(r.rate)}</span>
           </div>
         ))}
+        {(rates?.length ?? 0) > 5 && (
+          <div className="text-[10px] text-ink-muted">+{(rates?.length ?? 0) - 5} more</div>
+        )}
       </div>
     </WidgetShell>
   );

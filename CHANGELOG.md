@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Board vanishing when opening the Windows tray overflow (`^`) due to `HWND_BOTTOM` / blur re-pin
+- Widget fit/overflow edge cases: denser min heights, capped lists with “+N more”, gear-only scroll, Notes height fill
+- Grid column changes proportionally reflow layouts; layout packs scale to 8/12/16 cols
+- Corner radius theme applied to edit chrome / grid placeholder; dead `hide-widget-titles` CSS class toggle removed
+- Settings/Add modal titles no longer hidden when widget titles are off
 
 ## [1.0.0] — 2026-07-12
 

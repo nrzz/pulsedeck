@@ -26,9 +26,9 @@ export function NotesWidget({ id }: WidgetProps) {
   }, [value, dirty, config, setConfig]);
 
   return (
-    <WidgetShell id={id} title="Notes">
+    <WidgetShell id={id} title="Notes" allowScroll>
       <textarea
-        className="w-full h-full min-h-[120px] resize-none bg-transparent outline-none text-sm leading-relaxed placeholder:text-ink-muted"
+        className="w-full h-full min-h-0 resize-none bg-transparent outline-none text-sm leading-relaxed placeholder:text-ink-muted"
         placeholder="Jot something down…"
         value={value}
         onChange={(e) => {

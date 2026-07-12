@@ -51,8 +51,8 @@ export function WidgetShell({
           data-testid="alert-dot"
         />
       )}
-      {editMode && (
-        <div className="pointer-events-none absolute inset-0 rounded-2xl bg-accent/[0.03]" />
+          {editMode && (
+        <div className="pointer-events-none absolute inset-0 rounded-[var(--card-radius)] bg-accent/[0.03]" />
       )}
 
       {hideChrome ? (

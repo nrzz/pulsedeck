@@ -37,19 +37,19 @@ export function TimerWidget({ id }: WidgetProps) {
 
   return (
     <WidgetShell id={id} title="Pomodoro">
-      <div className="flex flex-col items-center justify-center h-full gap-3">
-        <div className="font-mono text-4xl font-semibold tabular-nums tracking-tight">
+      <div className="flex flex-col items-center justify-center h-full min-h-0 gap-2 overflow-hidden">
+        <div className="font-mono text-2xl font-semibold tabular-nums tracking-tight leading-none">
           {formatTime(remaining)}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           <button
             type="button"
-            className={cn('btn-accent px-4', running && 'opacity-80')}
+            className={cn('btn-accent !px-3 !py-1 !text-xs', running && 'opacity-80')}
             onClick={() => setRunning((v) => !v)}
           >
             {running ? 'Pause' : 'Start'}
           </button>
-          <button type="button" className="btn" onClick={reset}>
+          <button type="button" className="btn !px-3 !py-1 !text-xs" onClick={reset}>
             Reset
           </button>
         </div>

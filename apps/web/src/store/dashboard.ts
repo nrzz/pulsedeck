@@ -202,13 +202,11 @@ export const useDashboard = create<DashboardState>((set, get) => ({
     root.style.setProperty('--accent', hexToRgb(theme.accent));
     root.style.setProperty('--card-opacity', String(theme.cardOpacity));
     root.style.setProperty('--board-opacity', String(shell?.boardOpacity ?? 0.35));
-    root.style.setProperty('--board-scale', String(shell?.scale ?? 1));
     const radius =
       theme.cornerRadius === 'sharp' ? '6px' : theme.cornerRadius === 'round' ? '20px' : '14px';
     root.style.setProperty('--card-radius', radius);
     const fs = theme.fontSize === 's' ? '13px' : theme.fontSize === 'l' ? '16px' : '14px';
     root.style.setProperty('--ui-font-size', fs);
     root.classList.toggle('reduce-motion', Boolean(theme.reduceMotion));
-    root.classList.toggle('hide-widget-titles', theme.showWidgetTitles === false);
   },
 }));

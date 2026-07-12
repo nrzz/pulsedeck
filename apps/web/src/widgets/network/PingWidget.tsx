@@ -4,6 +4,8 @@ import { useDashboard } from '../../store/dashboard';
 import { cn } from '../../lib/utils';
 import type { WidgetProps } from '../registry';
 
+const MAX_HOSTS = 5;
+
 export function PingWidget({ id, settings }: WidgetProps) {
   const ping = useDashboard((s) => s.ping);
   const updateWidgetSettings = useDashboard((s) => s.updateWidgetSettings);
@@ -11,19 +13,25 @@ export function PingWidget({ id, settings }: WidgetProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(hosts.join(', '));
 
-  const relevant = ping.filter((p) => hosts.includes(p.host));
+  const rows = (
+    ping.filter((p) => hosts.includes(p.host)).length
+      ? ping.filter((p) => hosts.includes(p.host))
+      : hosts.map((h) => ({ host: h, alive: false, timeMs: null as number | null, timestamp: 0 }))
+  ).slice(0, MAX_HOSTS);
+  const more = Math.max(0, hosts.length - rows.length);
 
   return (
     <WidgetShell
       id={id}
       title="Ping"
+      allowScroll={editing}
       onSettings={() => {
         setDraft(hosts.join(', '));
         setEditing((v) => !v);
       }}
     >
       {editing ? (
-        <div className="space-y-2">
+        <div className="space-y-2" data-no-drag>
           <textarea
             className="input h-20 resize-none font-mono text-xs"
             value={draft}
@@ -46,12 +54,9 @@ export function PingWidget({ id, settings }: WidgetProps) {
           </button>
         </div>
       ) : (
-        <div className="space-y-2">
-          {(relevant.length
-            ? relevant
-            : hosts.map((h) => ({ host: h, alive: false, timeMs: null, timestamp: 0 }))
-          ).map((p) => (
-            <div key={p.host} className="flex items-center justify-between text-sm">
+        <div className="space-y-1.5 overflow-hidden">
+          {rows.map((p) => (
+            <div key={p.host} className="flex items-center justify-between text-sm gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <span
                   className={cn(
@@ -61,11 +66,12 @@ export function PingWidget({ id, settings }: WidgetProps) {
                 />
                 <span className="truncate font-mono text-xs">{p.host}</span>
               </div>
-              <span className="font-mono text-xs text-ink-muted">
+              <span className="font-mono text-xs text-ink-muted shrink-0">
                 {p.alive && p.timeMs != null ? `${p.timeMs.toFixed(0)} ms` : 'timeout'}
               </span>
             </div>
           ))}
+          {more > 0 && <div className="text-[10px] text-ink-muted">+{more} more</div>}
         </div>
       )}
     </WidgetShell>

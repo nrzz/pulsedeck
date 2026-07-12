@@ -7,6 +7,8 @@ import type { WidgetProps } from '../registry';
 
 type TodoItem = { id: string; text: string; done: boolean };
 
+const MAX_VISIBLE = 6;
+
 export function TodoWidget({ id, settings }: WidgetProps) {
   const updateWidgetSettings = useDashboard((s) => s.updateWidgetSettings);
   const items = (settings.items as TodoItem[]) || [];
@@ -29,10 +31,13 @@ export function TodoWidget({ id, settings }: WidgetProps) {
     setDraft('');
   };
 
+  const shown = items.slice(0, MAX_VISIBLE);
+  const more = items.length - shown.length;
+
   return (
     <WidgetShell id={id} title="Todo">
-      <div className="space-y-2 h-full flex flex-col">
-        <div className="flex gap-2">
+      <div className="space-y-2 h-full min-h-0 flex flex-col overflow-hidden">
+        <div className="flex gap-2 shrink-0">
           <input
             className="input flex-1 text-sm"
             placeholder="Add task…"
@@ -44,9 +49,9 @@ export function TodoWidget({ id, settings }: WidgetProps) {
             <Plus size={14} />
           </button>
         </div>
-        <div className="flex-1 overflow-hidden space-y-1">
+        <div className="flex-1 min-h-0 overflow-hidden space-y-1">
           {items.length === 0 && <div className="text-sm text-ink-muted">No tasks yet</div>}
-          {items.map((t) => (
+          {shown.map((t) => (
             <div key={t.id} className="flex items-center gap-2 group text-sm">
               <input type="checkbox" checked={t.done} onChange={() => toggle(t.id)} />
               <span className={cn('flex-1 truncate', t.done && 'line-through text-ink-muted')}>
@@ -61,6 +66,7 @@ export function TodoWidget({ id, settings }: WidgetProps) {
               </button>
             </div>
           ))}
+          {more > 0 && <div className="text-[10px] text-ink-muted">+{more} more</div>}
         </div>
       </div>
     </WidgetShell>

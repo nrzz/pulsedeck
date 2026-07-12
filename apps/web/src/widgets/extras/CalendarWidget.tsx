@@ -26,8 +26,8 @@ export function CalendarWidget({ id }: WidgetProps) {
 
   return (
     <WidgetShell id={id} title="Calendar">
-      <div className="space-y-2">
-        <div className="text-sm font-medium">{monthLabel}</div>
+      <div className="space-y-2 overflow-hidden h-full min-h-0">
+        <div className="text-sm font-medium truncate">{monthLabel}</div>
         <div className="grid grid-cols-7 gap-0.5 text-[10px] text-ink-muted text-center">
           {WEEKDAYS.map((d) => (
             <div key={d}>{d}</div>

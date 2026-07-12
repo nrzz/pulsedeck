@@ -32,7 +32,7 @@ export function ClipboardWidget({ id, settings }: WidgetProps) {
           <div className="text-sm text-ink-muted">No clipboard history</div>
         ) : (
           <div className="space-y-1 max-h-full overflow-hidden">
-            {history.map((item, i) => (
+            {history.slice(0, 6).map((item, i) => (
               <div
                 key={i}
                 className="text-xs font-mono truncate rounded bg-surface-3/50 px-2 py-1"
@@ -41,6 +41,9 @@ export function ClipboardWidget({ id, settings }: WidgetProps) {
                 {item}
               </div>
             ))}
+            {history.length > 6 && (
+              <div className="text-[10px] text-ink-muted">+{history.length - 6} more</div>
+            )}
           </div>
         )}
       </div>

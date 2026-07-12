@@ -7,6 +7,7 @@ import { persistConfig } from '../hooks/useWebSocket';
 import { useToast } from '../store/toast';
 import { uid } from '../lib/utils';
 import { isWidgetShell } from '../lib/shell';
+import { scaleLayoutBetween, scaleLayoutFrom12 } from '../lib/layout';
 
 const ACCENTS = ['#14b8a6', '#06b6d4', '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899'];
 
@@ -414,6 +415,17 @@ export function SettingsPanel() {
                   </button>
                 ))}
               </div>
+              <label className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-surface-3/40 px-3 py-2.5 text-sm cursor-pointer">
+                <span>Snap &amp; pack vertically</span>
+                <input
+                  type="checkbox"
+                  className="accent-[rgb(var(--accent))]"
+                  checked={config.shell?.snapToGrid !== false}
+                  onChange={(e) =>
+                    patch({ shell: { ...config.shell, snapToGrid: e.target.checked } })
+                  }
+                />
+              </label>
               <div className="text-xs text-ink-muted">Grid columns</div>
               <div className="flex gap-2">
                 {([8, 12, 16] as const).map((c) => (
@@ -421,7 +433,14 @@ export function SettingsPanel() {
                     key={c}
                     type="button"
                     className={`btn flex-1 justify-center ${config.shell?.gridCols === c ? 'bg-accent/20 border-accent/40' : ''}`}
-                    onClick={() => patch({ shell: { ...config.shell, gridCols: c } })}
+                    onClick={() => {
+                      const prev = config.shell?.gridCols ?? 12;
+                      const presets = config.presets.map((p) => ({
+                        ...p,
+                        layout: scaleLayoutBetween(p.layout, prev, c),
+                      }));
+                      void patch({ shell: { ...config.shell, gridCols: c }, presets });
+                    }}
                   >
                     {c} cols
                   </button>
@@ -471,9 +490,14 @@ export function SettingsPanel() {
                   type="button"
                   className="btn justify-center text-sm"
                   onClick={() => {
+                    const cols = config.shell?.gridCols ?? 12;
+                    const adapted = {
+                      ...pack,
+                      layout: scaleLayoutFrom12(pack.layout, cols),
+                    };
                     const others = config.presets.filter((p) => p.id !== pack.id);
                     void patch({
-                      presets: [...others, pack],
+                      presets: [...others, adapted],
                       activePresetId: pack.id,
                     });
                     showToast(`Applied ${pack.name}`);

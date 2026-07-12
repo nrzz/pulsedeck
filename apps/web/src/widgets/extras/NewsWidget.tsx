@@ -291,9 +291,12 @@ export function NewsWidget({ id, settings }: WidgetProps) {
       </div>
     );
   } else {
+    const limit = compact ? 5 : 6;
+    const shown = news.slice(0, limit);
+    const more = news.length - shown.length;
     body = (
       <ul className={`h-full min-h-0 overflow-hidden ${compact ? 'space-y-1' : 'space-y-1.5'}`}>
-        {news.slice(0, compact ? 5 : 6).map((item, i) => (
+        {shown.map((item, i) => (
           <li key={`${item.link || item.title}-${i}`} className="min-w-0">
             {item.link ? (
               <a
@@ -320,6 +323,9 @@ export function NewsWidget({ id, settings }: WidgetProps) {
             )}
           </li>
         ))}
+        {more > 0 && (
+          <li className="text-[10px] text-ink-muted">+{more} more</li>
+        )}
       </ul>
     );
   }

@@ -3,6 +3,8 @@ import { WidgetShell } from '../../components/WidgetShell';
 import { useDashboard } from '../../store/dashboard';
 import type { WidgetProps } from '../registry';
 
+const MAX_ZONES = 4;
+
 function useNow(tickMs = 1000) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -43,18 +45,22 @@ export function ClockWidget({ id, settings }: WidgetProps) {
     hour12: false,
   });
 
+  const shown = timezones.slice(0, MAX_ZONES);
+  const more = timezones.length - shown.length;
+
   return (
     <WidgetShell
       id={id}
       title="Clocks"
+      allowScroll={editing}
       onSettings={() => {
         setDraft(timezones.join(', '));
         setEditing((v) => !v);
       }}
     >
       {editing ? (
-        <div className="space-y-2">
-          <p className="text-[11px] text-ink-muted">IANA timezones</p>
+        <div className="space-y-2" data-no-drag>
+          <p className="text-[11px] text-ink-muted">IANA timezones (first {MAX_ZONES} shown live)</p>
           <textarea
             className="input h-20 resize-none font-mono text-xs"
             value={draft}
@@ -76,11 +82,11 @@ export function ClockWidget({ id, settings }: WidgetProps) {
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2 overflow-hidden h-full min-h-0">
           <div>
-            <div className="text-xs text-ink-muted">Local</div>
-            <div className="font-mono text-2xl font-semibold tracking-tight">{local}</div>
-            <div className="text-xs text-ink-muted">
+            <div className="text-[10px] text-ink-muted">Local</div>
+            <div className="font-mono text-xl font-semibold tracking-tight leading-tight">{local}</div>
+            <div className="text-[10px] text-ink-muted">
               {now.toLocaleDateString(undefined, {
                 weekday: 'short',
                 month: 'short',
@@ -88,16 +94,17 @@ export function ClockWidget({ id, settings }: WidgetProps) {
               })}
             </div>
           </div>
-          <div className="space-y-1.5 border-t border-white/5 pt-2">
-            {timezones.map((tz) => {
+          <div className="space-y-1 border-t border-white/5 pt-1.5">
+            {shown.map((tz) => {
               const f = formatInZone(now, tz);
               return (
-                <div key={tz} className="flex justify-between text-xs">
+                <div key={tz} className="flex justify-between text-xs gap-2">
                   <span className="text-ink-muted truncate">{f.label}</span>
-                  <span className="font-mono">{f.time}</span>
+                  <span className="font-mono shrink-0">{f.time}</span>
                 </div>
               );
             })}
+            {more > 0 && <div className="text-[10px] text-ink-muted">+{more} more</div>}
           </div>
         </div>
       )}

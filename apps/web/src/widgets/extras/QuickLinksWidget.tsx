@@ -6,6 +6,8 @@ import { persistConfig } from '../../hooks/useWebSocket';
 import { uid } from '../../lib/utils';
 import type { WidgetProps } from '../registry';
 
+const MAX_VISIBLE = 6;
+
 export function QuickLinksWidget({ id }: WidgetProps) {
   const config = useDashboard((s) => s.config);
   const setConfig = useDashboard((s) => s.setConfig);
@@ -19,10 +21,18 @@ export function QuickLinksWidget({ id }: WidgetProps) {
     await persistConfig(next);
   };
 
+  const links = editing ? config.quickLinks : config.quickLinks.slice(0, MAX_VISIBLE);
+  const more = editing ? 0 : Math.max(0, config.quickLinks.length - MAX_VISIBLE);
+
   return (
-    <WidgetShell id={id} title="Quick Links" onSettings={() => setEditing((v) => !v)}>
-      <div className="space-y-2">
-        {config.quickLinks.map((link) => (
+    <WidgetShell
+      id={id}
+      title="Quick Links"
+      allowScroll={editing}
+      onSettings={() => setEditing((v) => !v)}
+    >
+      <div className="space-y-1.5 overflow-hidden h-full min-h-0">
+        {links.map((link) => (
           <div key={link.id} className="flex items-center gap-2 group">
             <a
               href={link.url}
@@ -44,8 +54,9 @@ export function QuickLinksWidget({ id }: WidgetProps) {
             )}
           </div>
         ))}
+        {!editing && more > 0 && <div className="text-[10px] text-ink-muted">+{more} more</div>}
         {editing && (
-          <div className="space-y-2 pt-2 border-t border-white/5">
+          <div className="space-y-2 pt-2 border-t border-white/5" data-no-drag>
             <input
               className="input"
               placeholder="Title"

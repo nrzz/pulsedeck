@@ -80,7 +80,12 @@ export function HeadlineWidget({ id, settings }: WidgetProps) {
   }
 
   return (
-    <WidgetShell id={id} title="Headline" onSettings={() => setEditing((v) => !v)}>
+    <WidgetShell
+      id={id}
+      title="Headline"
+      allowScroll={editing}
+      onSettings={() => setEditing((v) => !v)}
+    >
       {body}
     </WidgetShell>
   );

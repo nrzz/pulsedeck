@@ -31,15 +31,18 @@ export function PortfolioWidget({ id, settings }: WidgetProps) {
 
   const total = rows.reduce((sum, r) => sum + r.value, 0);
 
+  const shown = rows.slice(0, 5);
+  const more = rows.length - shown.length;
+
   return (
     <WidgetShell id={id} title="Portfolio">
       {!holdings.length ? (
         <div className="text-sm text-ink-muted">Add holdings in settings</div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 overflow-hidden h-full min-h-0">
           <div className="text-lg font-mono font-semibold tabular-nums">${formatPrice(total)}</div>
           <div className="space-y-1.5 max-h-full overflow-hidden">
-            {rows.map((r) => (
+            {shown.map((r) => (
               <div key={`${r.kind}-${r.symbol}`} className="flex justify-between text-xs gap-2">
                 <div className="min-w-0 truncate">
                   <span className="font-medium">{r.symbol}</span>
@@ -50,6 +53,7 @@ export function PortfolioWidget({ id, settings }: WidgetProps) {
                 </span>
               </div>
             ))}
+            {more > 0 && <div className="text-[10px] text-ink-muted">+{more} more</div>}
           </div>
         </div>
       )}

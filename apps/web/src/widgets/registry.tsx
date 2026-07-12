@@ -68,7 +68,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'CPU',
     category: 'system',
     description: 'CPU usage and per-core load',
-    defaultSize: { w: 3, h: 3, minW: 2, minH: 2 },
+    defaultSize: { w: 3, h: 3, minW: 2, minH: 3 },
     component: CpuWidget,
   },
   ram: {
@@ -76,7 +76,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'Memory',
     category: 'system',
     description: 'RAM usage',
-    defaultSize: { w: 3, h: 3, minW: 2, minH: 2 },
+    defaultSize: { w: 3, h: 3, minW: 2, minH: 3 },
     component: RamWidget,
   },
   gpu: {
@@ -84,7 +84,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'GPU',
     category: 'system',
     description: 'GPU utilization and VRAM',
-    defaultSize: { w: 3, h: 3, minW: 2, minH: 2 },
+    defaultSize: { w: 3, h: 3, minW: 2, minH: 3 },
     component: GpuWidget,
   },
   disk: {
@@ -149,7 +149,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'CPU Frequency',
     category: 'system',
     description: 'Clock speeds',
-    defaultSize: { w: 3, h: 2, minW: 2, minH: 2 },
+    defaultSize: { w: 3, h: 3, minW: 2, minH: 3 },
     component: CpuFreqWidget,
   },
   swap: {
@@ -157,7 +157,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'Swap',
     category: 'system',
     description: 'Pagefile / swap usage',
-    defaultSize: { w: 3, h: 2, minW: 2, minH: 2 },
+    defaultSize: { w: 3, h: 3, minW: 2, minH: 3 },
     component: SwapWidget,
   },
   'disk-io': {
@@ -222,7 +222,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'Ping Monitor',
     category: 'network',
     description: 'Latency to hosts',
-    defaultSize: { w: 3, h: 3, minW: 2, minH: 2 },
+    defaultSize: { w: 3, h: 3, minW: 2, minH: 3 },
     defaultSettings: { hosts: ['1.1.1.1', '8.8.8.8', 'google.com'] },
     component: PingWidget,
   },
@@ -247,7 +247,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'Net Graph',
     category: 'network',
     description: 'RX/TX history sparkline',
-    defaultSize: { w: 4, h: 3, minW: 3, minH: 2 },
+    defaultSize: { w: 4, h: 3, minW: 3, minH: 3 },
     component: NetGraphWidget,
   },
   ports: {
@@ -322,7 +322,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'Clocks',
     category: 'extras',
     description: 'Local and world clocks',
-    defaultSize: { w: 2, h: 3, minW: 2, minH: 2 },
+    defaultSize: { w: 2, h: 3, minW: 2, minH: 3 },
     defaultSettings: { timezones: ['UTC', 'America/New_York', 'Asia/Kolkata'] },
     component: ClockWidget,
   },
@@ -360,7 +360,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'Notes',
     category: 'extras',
     description: 'Quick notes',
-    defaultSize: { w: 4, h: 4, minW: 2, minH: 2 },
+    defaultSize: { w: 4, h: 4, minW: 2, minH: 3 },
     component: NotesWidget,
   },
   todo: {
@@ -377,7 +377,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'Calendar',
     category: 'extras',
     description: 'Month calendar',
-    defaultSize: { w: 3, h: 4, minW: 2, minH: 3 },
+    defaultSize: { w: 3, h: 4, minW: 2, minH: 4 },
     component: CalendarWidget,
   },
   timer: {
@@ -385,7 +385,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'Timer',
     category: 'extras',
     description: 'Pomodoro countdown',
-    defaultSize: { w: 2, h: 3, minW: 2, minH: 2 },
+    defaultSize: { w: 2, h: 3, minW: 2, minH: 3 },
     component: TimerWidget,
   },
   stopwatch: {
@@ -393,7 +393,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'Stopwatch',
     category: 'extras',
     description: 'Elapsed timer',
-    defaultSize: { w: 2, h: 2, minW: 2, minH: 2 },
+    defaultSize: { w: 2, h: 3, minW: 2, minH: 3 },
     component: StopwatchWidget,
   },
   'quick-links': {
@@ -467,7 +467,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'Hotkeys',
     category: 'extras',
     description: 'Shortcut cheat-sheet',
-    defaultSize: { w: 3, h: 3, minW: 2, minH: 2 },
+    defaultSize: { w: 3, h: 3, minW: 2, minH: 3 },
     component: HotkeysWidget,
   },
 };

@@ -50,7 +50,20 @@ export function DashboardGrid() {
     return map;
   }, [preset.widgets]);
 
-  const storeLayout = useMemo(() => toRglLayout(preset.layout), [preset.layout]);
+  const storeLayout = useMemo(() => {
+    // Enforce registry min sizes so old saved layouts don't clip dense widgets.
+    const clamped = preset.layout.map((item) => {
+      const widget = preset.widgets.find((w) => w.id === item.i);
+      const def = widget ? getWidget(widget.type) : undefined;
+      const minW = Math.max(item.minW ?? 2, def?.defaultSize.minW ?? 2);
+      const minH = Math.max(item.minH ?? 2, def?.defaultSize.minH ?? 2);
+      const w = Math.max(item.w, minW);
+      const h = Math.max(item.h, minH);
+      const x = Math.min(Math.max(0, item.x), Math.max(0, (config.shell?.gridCols ?? 12) - w));
+      return { ...item, w, h, x, minW, minH };
+    });
+    return toRglLayout(clamped);
+  }, [preset.layout, preset.widgets, config.shell?.gridCols]);
 
   const [localLayout, setLocalLayout] = useState<Layout[]>(storeLayout);
 
@@ -92,6 +105,7 @@ export function DashboardGrid() {
   const baseMargin = density === 'compact' ? 10 : density === 'spacious' ? 18 : 14;
   const margin: [number, number] = [Math.round(baseMargin * scale), Math.round(baseMargin * scale)];
   const cols = config.shell?.gridCols ?? 12;
+  const snap = config.shell?.snapToGrid !== false;
 
   return (
     <div
@@ -109,7 +123,7 @@ export function DashboardGrid() {
         rowHeight={rowHeight}
         margin={margin}
         containerPadding={[0, 0]}
-        compactType="vertical"
+        compactType={snap ? 'vertical' : null}
         isDraggable={editMode}
         isResizable={editMode}
         draggableHandle=".widget-drag-region"
