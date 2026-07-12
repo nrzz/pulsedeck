@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-07-12
+
 ### Added
 
 - **WorkerW desktop pin** — board lives on the wallpaper layer; tray `^` / click no longer hide it
@@ -33,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grid column changes proportionally reflow layouts; layout packs scale to 8/12/16 cols
 - Corner radius theme applied to edit chrome / grid placeholder; dead `hide-widget-titles` CSS class toggle removed
 - Settings/Add modal titles no longer hidden when widget titles are off
+- Production `npm start` resolving the correct web UI dist (`index.html`)
 
 ### Removed
 
@@ -48,15 +51,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compact **Desktop** preset (CPU, RAM, Network, Clock, Weather)
 - Full browser dashboard with drag-and-drop / resize grid (Edit mode)
 - 18 widgets across system, network, finance, and extras
-- Themes, accents, density, layout presets, config export/import
-- Fastify + WebSocket metrics server (`systeminformation` + external APIs)
-- CI (typecheck, lint, format check, build) and tag-triggered Windows release workflow
-- Docs: install guide, architecture, widget reference, creating-widgets SOP
+- Themes, accents, density, notes, quick links, layout presets, export/import
+- GitHub Actions CI + Windows release workflow
 
 ### Fixed
 
 - Grid drag/resize broken by CSS `transform` entrance animation on grid items
 - Packaged app crash from top-level `import.meta.url` in CJS server bundle
 
-[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.1
 [1.0.0]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.0
