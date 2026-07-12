@@ -47,6 +47,7 @@ jobs:
             npm install app-builder-bin@5.0.0-alpha.10 --force --no-save || true
           fi
           chmod +x "$BIN" 2>/dev/null || true
+          # Build already ran above — pack only needs electron-builder --dir
           npm run pack -w @pulsedeck/desktop
 
   e2e:

@@ -43,7 +43,8 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: |
-          npm run dist:win -w @pulsedeck/desktop
+          # Root dist:win runs full monorepo build (shared/web/server) then packages
+          npm run dist:win
           if (-not (Test-Path "apps/desktop/release/PulseDeck-Setup-*.exe")) {
             Get-ChildItem apps/desktop/release -ErrorAction SilentlyContinue
             throw "Windows installer missing"
@@ -86,7 +87,8 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: |
-          npm run dist:linux -w @pulsedeck/desktop
+          # Root dist:linux runs full monorepo build (shared/web/server) then packages
+          npm run dist:linux
           ls -la apps/desktop/release/
           test -n "$(ls apps/desktop/release/PulseDeck-*.AppImage 2>/dev/null)"
           test -n "$(ls apps/desktop/release/PulseDeck-*-amd64.deb 2>/dev/null || ls apps/desktop/release/PulseDeck-*.deb 2>/dev/null)"
