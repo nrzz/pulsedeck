@@ -1,8 +1,5 @@
 import { useMemo, useState } from 'react';
-import {
-  STOCK_WATCHLIST_OPTIONS,
-  normalizeStockSymbol,
-} from '@pulsedeck/shared';
+import { STOCK_WATCHLIST_OPTIONS, normalizeStockSymbol } from '@pulsedeck/shared';
 import { WidgetShell } from '../../components/WidgetShell';
 import { useDashboard } from '../../store/dashboard';
 import { cn, formatPrice } from '../../lib/utils';
@@ -13,7 +10,9 @@ export function StocksWidget({ id, settings }: WidgetProps) {
   const updateWidgetSettings = useDashboard((s) => s.updateWidgetSettings);
   const symbols = useMemo(
     () =>
-      ((settings.symbols as string[]) || ['AAPL', 'MSFT', 'GOOGL', 'TSLA']).map(normalizeStockSymbol),
+      ((settings.symbols as string[]) || ['AAPL', 'MSFT', 'GOOGL', 'TSLA']).map(
+        normalizeStockSymbol,
+      ),
     [settings.symbols],
   );
   const [editing, setEditing] = useState(false);
@@ -39,12 +38,7 @@ export function StocksWidget({ id, settings }: WidgetProps) {
   };
 
   return (
-    <WidgetShell
-      id={id}
-      title="Stocks"
-      onSettings={() => setEditing((v) => !v)}
-      allowScroll
-    >
+    <WidgetShell id={id} title="Stocks" onSettings={() => setEditing((v) => !v)} allowScroll>
       {editing ? (
         <div className="space-y-2" data-no-drag>
           <p className="text-[11px] text-ink-muted">Tap to add / remove · any Yahoo ticker works</p>
@@ -95,7 +89,11 @@ export function StocksWidget({ id, settings }: WidgetProps) {
           {symbols.length > 0 && (
             <p className="text-[10px] text-ink-muted truncate">Watching: {symbols.join(', ')}</p>
           )}
-          <button type="button" className="btn-accent w-full justify-center" onClick={() => setEditing(false)}>
+          <button
+            type="button"
+            className="btn-accent w-full justify-center"
+            onClick={() => setEditing(false)}
+          >
             Done
           </button>
         </div>
@@ -104,7 +102,11 @@ export function StocksWidget({ id, settings }: WidgetProps) {
           {!list.length && (
             <div className="text-sm text-ink-muted space-y-1">
               <div>{stocks.length ? 'No matching tickers' : 'Loading quotes…'}</div>
-              <button type="button" className="text-[10px] text-accent" onClick={() => setEditing(true)}>
+              <button
+                type="button"
+                className="text-[10px] text-accent"
+                onClick={() => setEditing(true)}
+              >
                 Open gear · pick Gold ETF, Silver, futures…
               </button>
             </div>

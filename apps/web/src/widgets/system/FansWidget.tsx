@@ -25,7 +25,9 @@ export function FansWidget({ id }: WidgetProps) {
               className="flex justify-between items-center text-[11px] gap-2"
             >
               <span className="text-ink-muted truncate">{fan.label || `Fan ${i + 1}`}</span>
-              <span className="font-mono tabular-nums shrink-0">{fan.rpm.toLocaleString()} RPM</span>
+              <span className="font-mono tabular-nums shrink-0">
+                {fan.rpm.toLocaleString()} RPM
+              </span>
             </div>
           ))}
           {fans.length > shown.length && (

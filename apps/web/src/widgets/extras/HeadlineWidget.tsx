@@ -54,7 +54,11 @@ export function HeadlineWidget({ id, settings }: WidgetProps) {
           onChange={(e) => setFeedUrl(e.target.value)}
           placeholder="RSS / Atom URL"
         />
-        <button type="button" className="btn-accent w-full justify-center" onClick={() => apply(feedUrl)}>
+        <button
+          type="button"
+          className="btn-accent w-full justify-center"
+          onClick={() => apply(feedUrl)}
+        >
           Save feed
         </button>
         <p className="text-[10px] text-ink-muted">

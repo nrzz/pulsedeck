@@ -79,7 +79,9 @@ export function PortsWidget({ id, settings }: WidgetProps) {
     >
       {editing ? (
         <div className="space-y-2" data-no-drag>
-          <p className="text-[11px] text-ink-muted">Hosts or host:port — e.g. 1.1.1.1, 8.8.8.8:53</p>
+          <p className="text-[11px] text-ink-muted">
+            Hosts or host:port — e.g. 1.1.1.1, 8.8.8.8:53
+          </p>
           <textarea
             className="input h-24 resize-none font-mono text-xs"
             value={draft}
@@ -131,7 +133,10 @@ export function PortsWidget({ id, settings }: WidgetProps) {
             <div className="space-y-1.5 border-t border-white/5 pt-2">
               <div className="text-[10px] text-ink-muted uppercase tracking-wide">Ports</div>
               {portRows.map((p, i) => (
-                <div key={`${p.host}-${p.port}-${i}`} className="flex justify-between text-xs font-mono gap-2">
+                <div
+                  key={`${p.host}-${p.port}-${i}`}
+                  className="flex justify-between text-xs font-mono gap-2"
+                >
                   <span className="truncate">{p.label || `${p.host}:${p.port}`}</span>
                   <span className="text-ink-muted tabular-nums shrink-0">{p.port}</span>
                 </div>
@@ -141,7 +146,11 @@ export function PortsWidget({ id, settings }: WidgetProps) {
           )}
 
           {hosts.length === 0 && ports.length === 0 && (
-            <button type="button" className="text-ink-muted text-xs hover:text-accent" onClick={() => setEditing(true)}>
+            <button
+              type="button"
+              className="text-ink-muted text-xs hover:text-accent"
+              onClick={() => setEditing(true)}
+            >
               Configure hosts…
             </button>
           )}

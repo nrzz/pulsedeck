@@ -36,7 +36,8 @@ export function loadShellPrefs(userData: string): ShellPrefs {
       return migrated;
     }
     return {
-      alwaysOnTop: typeof parsed.alwaysOnTop === 'boolean' ? parsed.alwaysOnTop : DEFAULTS.alwaysOnTop,
+      alwaysOnTop:
+        typeof parsed.alwaysOnTop === 'boolean' ? parsed.alwaysOnTop : DEFAULTS.alwaysOnTop,
       v: PREFS_VERSION,
     };
   } catch {

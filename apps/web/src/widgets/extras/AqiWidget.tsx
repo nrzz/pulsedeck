@@ -44,9 +44,7 @@ export function AqiWidget({ id, settings }: WidgetProps) {
   const apply = (nextCity: string, nextLat: number, nextLon: number) => {
     updateWidgetSettings(id, { city: nextCity, lat: nextLat, lon: nextLon });
     setEditing(false);
-    void fetch(
-      `/api/aqi?lat=${nextLat}&lon=${nextLon}&city=${encodeURIComponent(nextCity)}`,
-    )
+    void fetch(`/api/aqi?lat=${nextLat}&lon=${nextLon}&city=${encodeURIComponent(nextCity)}`)
       .then((r) => r.json())
       .then((data) => {
         if (data?.value != null) useDashboard.getState().setAqi(data);
@@ -87,8 +85,18 @@ export function AqiWidget({ id, settings }: WidgetProps) {
             placeholder="City"
           />
           <div className="grid grid-cols-2 gap-2">
-            <input className="input" value={lat} onChange={(e) => setLat(e.target.value)} placeholder="Lat" />
-            <input className="input" value={lon} onChange={(e) => setLon(e.target.value)} placeholder="Lon" />
+            <input
+              className="input"
+              value={lat}
+              onChange={(e) => setLat(e.target.value)}
+              placeholder="Lat"
+            />
+            <input
+              className="input"
+              value={lon}
+              onChange={(e) => setLon(e.target.value)}
+              placeholder="Lon"
+            />
           </div>
           <button
             type="button"

@@ -17,7 +17,7 @@ export function PortfolioWidget({ id, settings }: WidgetProps) {
   const crypto = useDashboard((s) => s.crypto);
   const stocks = useDashboard((s) => s.stocks);
   const updateWidgetSettings = useDashboard((s) => s.updateWidgetSettings);
-  const holdings = (settings.holdings as Holding[]) || [];
+  const holdings = useMemo(() => (settings.holdings as Holding[]) || [], [settings.holdings]);
   const [editing, setEditing] = useState(false);
   const [symbol, setSymbol] = useState('');
   const [amount, setAmount] = useState('1');
@@ -30,14 +30,11 @@ export function PortfolioWidget({ id, settings }: WidgetProps) {
       let price = 0;
       if (h.kind === 'stock') {
         const want = normalizeStockSymbol(h.symbol);
-        price =
-          stocks.find((s) => normalizeStockSymbol(s.symbol) === want)?.price ?? 0;
+        price = stocks.find((s) => normalizeStockSymbol(s.symbol) === want)?.price ?? 0;
       } else {
         const want = normalizeCryptoId(h.symbol);
         const c = crypto.find(
-          (c) =>
-            c.id.toLowerCase() === want ||
-            normalizeCryptoId(c.symbol) === want,
+          (c) => c.id.toLowerCase() === want || normalizeCryptoId(c.symbol) === want,
         );
         price = c?.price ?? 0;
       }
@@ -57,12 +54,7 @@ export function PortfolioWidget({ id, settings }: WidgetProps) {
   const options = kind === 'stock' ? STOCK_WATCHLIST_OPTIONS : CRYPTO_WATCHLIST_OPTIONS;
 
   return (
-    <WidgetShell
-      id={id}
-      title="Portfolio"
-      allowScroll
-      onSettings={() => setEditing((v) => !v)}
-    >
+    <WidgetShell id={id} title="Portfolio" allowScroll onSettings={() => setEditing((v) => !v)}>
       {editing ? (
         <div className="space-y-2" data-no-drag>
           {holdings.map((h, i) => (
@@ -131,12 +123,20 @@ export function PortfolioWidget({ id, settings }: WidgetProps) {
           >
             <Plus size={14} /> Add holding
           </button>
-          <button type="button" className="btn-accent w-full justify-center" onClick={() => setEditing(false)}>
+          <button
+            type="button"
+            className="btn-accent w-full justify-center"
+            onClick={() => setEditing(false)}
+          >
             Done
           </button>
         </div>
       ) : !holdings.length ? (
-        <button type="button" className="text-sm text-ink-muted hover:text-accent" onClick={() => setEditing(true)}>
+        <button
+          type="button"
+          className="text-sm text-ink-muted hover:text-accent"
+          onClick={() => setEditing(true)}
+        >
           Add holdings…
         </button>
       ) : (

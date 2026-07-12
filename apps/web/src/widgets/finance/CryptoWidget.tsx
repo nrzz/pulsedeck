@@ -1,8 +1,5 @@
 import { useMemo, useState } from 'react';
-import {
-  CRYPTO_WATCHLIST_OPTIONS,
-  normalizeCryptoId,
-} from '@pulsedeck/shared';
+import { CRYPTO_WATCHLIST_OPTIONS, normalizeCryptoId } from '@pulsedeck/shared';
 import { WidgetShell } from '../../components/WidgetShell';
 import { Sparkline } from '../../components/Sparkline';
 import { useDashboard } from '../../store/dashboard';
@@ -24,11 +21,7 @@ export function CryptoWidget({ id, settings }: WidgetProps) {
     if (!crypto.length) return [];
     const order = new Map(symbols.map((s, i) => [s, i]));
     return [...crypto]
-      .filter(
-        (c) =>
-          order.has(c.id.toLowerCase()) ||
-          symbols.includes(normalizeCryptoId(c.symbol)),
-      )
+      .filter((c) => order.has(c.id.toLowerCase()) || symbols.includes(normalizeCryptoId(c.symbol)))
       .sort((a, b) => (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99));
   }, [crypto, symbols]);
 
@@ -44,12 +37,7 @@ export function CryptoWidget({ id, settings }: WidgetProps) {
   };
 
   return (
-    <WidgetShell
-      id={id}
-      title="Crypto"
-      onSettings={() => setEditing((v) => !v)}
-      allowScroll
-    >
+    <WidgetShell id={id} title="Crypto" onSettings={() => setEditing((v) => !v)} allowScroll>
       {editing ? (
         <div className="space-y-2" data-no-drag>
           <p className="text-[11px] text-ink-muted">Tap to add / remove · CoinGecko ids</p>
@@ -100,7 +88,11 @@ export function CryptoWidget({ id, settings }: WidgetProps) {
           {symbols.length > 0 && (
             <p className="text-[10px] text-ink-muted truncate">Watching: {symbols.join(', ')}</p>
           )}
-          <button type="button" className="btn-accent w-full justify-center" onClick={() => setEditing(false)}>
+          <button
+            type="button"
+            className="btn-accent w-full justify-center"
+            onClick={() => setEditing(false)}
+          >
             Done
           </button>
         </div>
@@ -109,7 +101,11 @@ export function CryptoWidget({ id, settings }: WidgetProps) {
           {!list.length && (
             <div className="text-sm text-ink-muted space-y-1">
               <div>{crypto.length ? 'No matching coins' : 'Loading quotes…'}</div>
-              <button type="button" className="text-[10px] text-accent" onClick={() => setEditing(true)}>
+              <button
+                type="button"
+                className="text-[10px] text-accent"
+                onClick={() => setEditing(true)}
+              >
                 Open gear · pick BTC, ETH, PAXG…
               </button>
             </div>
@@ -120,7 +116,9 @@ export function CryptoWidget({ id, settings }: WidgetProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between gap-2">
                   <span className="font-medium text-[12px] truncate">{c.symbol}</span>
-                  <span className="font-mono text-[12px] tabular-nums shrink-0">${formatPrice(c.price)}</span>
+                  <span className="font-mono text-[12px] tabular-nums shrink-0">
+                    ${formatPrice(c.price)}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center gap-2">
                   <span

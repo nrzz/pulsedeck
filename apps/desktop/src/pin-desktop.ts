@@ -33,14 +33,18 @@ export function createDesktopPinner(): PinFn {
   try {
     const user32 = koffi.load('user32.dll');
 
-    const FindWindowW = user32.func('void * __stdcall FindWindowW(str16 lpClassName, str16 lpWindowName)');
+    const FindWindowW = user32.func(
+      'void * __stdcall FindWindowW(str16 lpClassName, str16 lpWindowName)',
+    );
     const FindWindowExW = user32.func(
       'void * __stdcall FindWindowExW(void *hWndParent, void *hWndChildAfter, str16 lpszClass, str16 lpszWindow)',
     );
     const SendMessageTimeoutW = user32.func(
       'void * __stdcall SendMessageTimeoutW(void *hWnd, uint Msg, size_t wParam, size_t lParam, uint fuFlags, uint uTimeout, void *lpdwResult)',
     );
-    const SetParent = user32.func('void * __stdcall SetParent(void *hWndChild, void *hWndNewParent)');
+    const SetParent = user32.func(
+      'void * __stdcall SetParent(void *hWndChild, void *hWndNewParent)',
+    );
     const SetWindowPos = user32.func(
       'bool __stdcall SetWindowPos(void *hWnd, void *hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags)',
     );
@@ -131,7 +135,9 @@ export function createDesktopDetacher(): PinFn {
   }
   try {
     const user32 = koffi.load('user32.dll');
-    const SetParent = user32.func('void * __stdcall SetParent(void *hWndChild, void *hWndNewParent)');
+    const SetParent = user32.func(
+      'void * __stdcall SetParent(void *hWndChild, void *hWndNewParent)',
+    );
     return (win: BrowserWindow) => {
       try {
         if (win.isDestroyed()) return;

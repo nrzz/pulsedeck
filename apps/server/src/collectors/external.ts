@@ -1,4 +1,10 @@
-import type { CryptoQuote, NewsFeedResult, NewsItem, StockQuote, WeatherData } from '@pulsedeck/shared';
+import type {
+  CryptoQuote,
+  NewsFeedResult,
+  NewsItem,
+  StockQuote,
+  WeatherData,
+} from '@pulsedeck/shared';
 import { NEWS_TOPICS, normalizeStockSymbol } from '@pulsedeck/shared';
 
 export async function fetchCrypto(ids: string[]): Promise<CryptoQuote[]> {
@@ -151,9 +157,7 @@ export async function fetchWeather(
   }
 }
 
-export async function fetchExchange(
-  pairs: string[],
-): Promise<{ pair: string; rate: number }[]> {
+export async function fetchExchange(pairs: string[]): Promise<{ pair: string; rate: number }[]> {
   const out: { pair: string; rate: number }[] = [];
   for (const pair of pairs.slice(0, 6)) {
     const [base, quote] = pair.split('/').map((s) => s.trim().toUpperCase());
@@ -301,10 +305,9 @@ export async function fetchNews(options: {
   limit?: number;
 }): Promise<NewsFeedResult> {
   const limit = Math.min(40, Math.max(6, options.limit ?? 20));
-  const topicIds = (options.topics?.length ? options.topics : ['technology', 'world', 'india']).slice(
-    0,
-    8,
-  );
+  const topicIds = (
+    options.topics?.length ? options.topics : ['technology', 'world', 'india']
+  ).slice(0, 8);
   const customFeeds = (options.feeds || []).filter(Boolean).slice(0, 3);
 
   // Pull enough per topic so round-robin isn't "1 headline each"

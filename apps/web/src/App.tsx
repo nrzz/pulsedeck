@@ -89,10 +89,7 @@ export default function App() {
           </div>
         )}
         {widgetCount === 0 ? (
-          <div
-            className="mx-4 glass-card p-8 text-center max-w-lg"
-            data-testid="empty-board-cta"
-          >
+          <div className="mx-4 glass-card p-8 text-center max-w-lg" data-testid="empty-board-cta">
             <div className="mx-auto mb-3 h-12 w-12 rounded-2xl bg-accent/20 flex items-center justify-center text-accent text-xl font-semibold">
               +
             </div>

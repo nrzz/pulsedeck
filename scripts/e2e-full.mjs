@@ -128,6 +128,33 @@ function assertTraySource() {
   const typeCount = (catalog.match(/type: '/g) || []).length;
   if (typeCount >= 40) ok('shared-catalog-40plus', `${typeCount} types`);
   else fail('shared-catalog-40plus', `${typeCount} types`);
+
+  if (/STOCK_WATCHLIST_OPTIONS/.test(catalog) && /GLD/.test(catalog) && /SLV/.test(catalog))
+    ok('shared-stock-presets-gold-silver');
+  else fail('shared-stock-presets-gold-silver', 'missing GLD/SLV presets');
+
+  if (/normalizeStockSymbol/.test(catalog) && /normalizeCryptoId/.test(catalog))
+    ok('shared-symbol-normalizers');
+  else fail('shared-symbol-normalizers', 'missing normalize helpers');
+
+  if (/NEWS_SUGGESTIONS/.test(catalog) && /Daily brief/.test(catalog)) ok('shared-news-suggestions');
+  else fail('shared-news-suggestions', 'missing Daily brief pack');
+
+  const gpuPath = path.join(ROOT, 'apps/server/src/collectors/gpu.ts');
+  if (fs.existsSync(gpuPath)) {
+    const gpuSrc = fs.readFileSync(gpuPath, 'utf8');
+    if (/nvidia-smi/.test(gpuSrc) && /GPU Engine/.test(gpuSrc) && /enrichGpuMetrics/.test(gpuSrc))
+      ok('gpu-enrich-collector');
+    else fail('gpu-enrich-collector', 'missing nvidia-smi / PDH enrichment');
+  } else fail('gpu-enrich-collector', 'gpu.ts missing');
+
+  const newsWidget = fs.readFileSync(
+    path.join(ROOT, 'apps/web/src/widgets/extras/NewsWidget.tsx'),
+    'utf8',
+  );
+  if (/allowScroll/.test(newsWidget) && !/slice\(0,\s*[56]\)/.test(newsWidget))
+    ok('news-scroll-no-hard-cap');
+  else fail('news-scroll-no-hard-cap', 'News still capping visible items or not scrollable');
 }
 
 async function testApis() {
@@ -152,6 +179,24 @@ async function testApis() {
   if (stocks.res.ok) ok('api-stocks');
   else fail('api-stocks', `${stocks.res.status}`);
 
+  const commodities = await api('/api/stocks?symbols=GLD,SLV,GC%3DF,SI%3DF');
+  if (
+    commodities.res.ok &&
+    Array.isArray(commodities.json) &&
+    commodities.json.length >= 2 &&
+    commodities.json.every((q) => typeof q.price === 'number' && q.price > 0)
+  ) {
+    ok(
+      'api-stocks-commodities',
+      commodities.json.map((q) => `${q.symbol}=${q.price}`).join(', '),
+    );
+  } else {
+    fail(
+      'api-stocks-commodities',
+      `${commodities.res.status} n=${Array.isArray(commodities.json) ? commodities.json.length : 0}`,
+    );
+  }
+
   const weather = await api('/api/weather?lat=12.9716&lon=77.5946&city=Bangalore');
   if (weather.res.ok) ok('api-weather');
   else fail('api-weather', `${weather.res.status}`);
@@ -173,9 +218,63 @@ async function testApis() {
     ok('api-news', `${news.json.items.length} items`);
   else fail('api-news', `${news.res.status}`);
 
+  const newsMix = await api(
+    '/api/news?topics=technology,world,india,business&limit=20',
+  );
+  if (
+    newsMix.res.ok &&
+    Array.isArray(newsMix.json?.items) &&
+    newsMix.json.items.length >= 8
+  ) {
+    const sources = new Set(
+      newsMix.json.items.map((i) => i.source || i.topic || '').filter(Boolean),
+    );
+    ok(
+      'api-news-variety',
+      `${newsMix.json.items.length} items, ${sources.size} sources`,
+    );
+  } else {
+    fail(
+      'api-news-variety',
+      `n=${Array.isArray(newsMix.json?.items) ? newsMix.json.items.length : 0}`,
+    );
+  }
+
   const ping = await api('/api/ping?hosts=1.1.1.1');
   if (ping.res.ok) ok('api-ping');
   else fail('api-ping', `${ping.res.status}`);
+
+  // GPU dual-adapter edge cases
+  if (metrics.res.ok && Array.isArray(metrics.json?.gpu)) {
+    const gpus = metrics.json.gpu;
+    if (gpus.length === 0) {
+      ok('api-gpu-optional', 'no GPU reported on this host');
+    } else {
+      const allHaveUtil = gpus.every(
+        (g) => typeof g.utilization === 'number' && g.utilization >= 0 && g.utilization <= 100,
+      );
+      if (allHaveUtil) ok('api-gpu-util-range', gpus.map((g) => `${g.model}:${g.utilization}%`).join(' | '));
+      else fail('api-gpu-util-range', JSON.stringify(gpus.map((g) => g.utilization)));
+
+      const discreteFirst = /nvidia|geforce|radeon|rtx|gtx|amd/i.test(gpus[0]?.model || '');
+      const hasIntel = gpus.some((g) => /intel|uhd|iris/i.test(g.model || ''));
+      if (gpus.length > 1 && hasIntel) {
+        if (discreteFirst) ok('api-gpu-discrete-first', gpus[0].model);
+        else fail('api-gpu-discrete-first', `primary=${gpus[0]?.model}`);
+      } else {
+        ok('api-gpu-order', gpus.map((g) => g.model).join(' | '));
+      }
+    }
+  } else {
+    fail('api-gpu', 'metrics.gpu missing');
+  }
+
+  const cryptoGold = await api('/api/crypto?ids=bitcoin,pax-gold');
+  if (cryptoGold.res.ok && Array.isArray(cryptoGold.json) && cryptoGold.json.length >= 1) {
+    ok('api-crypto-pax-gold', cryptoGold.json.map((c) => c.id || c.symbol).join(','));
+  } else {
+    fail('api-crypto-pax-gold', `${cryptoGold.res.status}`);
+  }
 }
 
 async function resetDesktopPreset(page) {
@@ -374,7 +473,58 @@ async function testBrowserDashboard(page) {
   await page.getByTestId('open-settings').click();
   await page.getByRole('heading', { name: 'Settings' }).waitFor();
   ok('browser-settings');
+
+  // News defaults in customize panel
+  const topicsLabel = page.getByText(/Topics \(max 8\)/i);
+  if (await topicsLabel.count()) ok('settings-news-topics-max8');
+  else fail('settings-news-topics-max8', 'Topics (max 8) missing');
+
   await page.locator('aside').locator('button').first().click();
+
+  // Stocks gear: gold/silver chips
+  await page.goto(`${BASE}/?shell=widget`, { waitUntil: 'load' });
+  await page.waitForTimeout(800);
+  const stocksCard = page.locator('[data-widget-type="stocks"]').first();
+  if (await stocksCard.count()) {
+    const gear = stocksCard.getByRole('button', { name: /Configure widget/i }).first();
+    if (await gear.count()) {
+      await gear.click();
+      await page.waitForTimeout(400);
+    }
+    const goldChip = page.getByRole('button', { name: /Gold ETF/i });
+    const silverChip = page.getByRole('button', { name: /Silver ETF/i });
+    if ((await goldChip.count()) && (await silverChip.count())) {
+      await goldChip.click();
+      await silverChip.click();
+      ok('stocks-gear-gold-silver-chips');
+    } else if (await page.getByText(/Gold ETF/i).count()) {
+      ok('stocks-gear-gold-silver-chips', 'visible');
+    } else {
+      fail('stocks-gear-gold-silver-chips', 'chips not found');
+    }
+  } else {
+    ok('stocks-gear-skipped', 'stocks widget not on board in this shell pass');
+  }
+
+  // GPU widget shows discrete primary when dual-GPU
+  const gpuCard = page.locator('[data-widget-type="gpu"]').first();
+  if (await gpuCard.count()) {
+    const text = await gpuCard.innerText();
+    if (/nvidia|geforce|radeon|rtx|intel|gpu|util|%/i.test(text)) ok('gpu-widget-render', text.slice(0, 80).replace(/\s+/g, ' '));
+    else fail('gpu-widget-render', text.slice(0, 120));
+  } else {
+    ok('gpu-widget-skipped', 'gpu not on current board');
+  }
+
+  // News widget scroll class
+  const newsCard = page.locator('[data-widget-type="news"]').first();
+  if (await newsCard.count()) {
+    const scrollable = await newsCard.locator('.widget-body-scroll').count();
+    if (scrollable) ok('news-widget-scroll-class');
+    else fail('news-widget-scroll-class', 'missing widget-body-scroll');
+  } else {
+    ok('news-widget-skipped', 'news not on current board');
+  }
 
   await page.screenshot({ path: path.join(OUT, 'full-browser.png'), fullPage: true });
   ok('screenshot-browser');

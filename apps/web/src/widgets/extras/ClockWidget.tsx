@@ -60,7 +60,9 @@ export function ClockWidget({ id, settings }: WidgetProps) {
     >
       {editing ? (
         <div className="space-y-2" data-no-drag>
-          <p className="text-[11px] text-ink-muted">IANA timezones (first {MAX_ZONES} shown live)</p>
+          <p className="text-[11px] text-ink-muted">
+            IANA timezones (first {MAX_ZONES} shown live)
+          </p>
           <textarea
             className="input h-20 resize-none font-mono text-xs"
             value={draft}
@@ -85,7 +87,9 @@ export function ClockWidget({ id, settings }: WidgetProps) {
         <div className="space-y-2 overflow-hidden h-full min-h-0">
           <div>
             <div className="text-[10px] text-ink-muted">Local</div>
-            <div className="font-mono text-xl font-semibold tracking-tight leading-tight">{local}</div>
+            <div className="font-mono text-xl font-semibold tracking-tight leading-tight">
+              {local}
+            </div>
             <div className="text-[10px] text-ink-muted">
               {now.toLocaleDateString(undefined, {
                 weekday: 'short',

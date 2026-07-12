@@ -1,5 +1,15 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { LayoutGrid, Lock, LockOpen, Plus, Save, Settings, Sparkles, Wifi, WifiOff } from 'lucide-react';
+import {
+  LayoutGrid,
+  Lock,
+  LockOpen,
+  Plus,
+  Save,
+  Settings,
+  Sparkles,
+  Wifi,
+  WifiOff,
+} from 'lucide-react';
 import { useDashboard } from '../store/dashboard';
 import { persistConfig } from '../hooks/useWebSocket';
 import { useToast } from '../store/toast';

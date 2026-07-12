@@ -20,7 +20,11 @@ export function ClipboardWidget({ id, settings }: WidgetProps) {
       title="Clipboard"
       actions={
         history.length > 0 ? (
-          <button type="button" className="text-[10px] text-ink-muted hover:text-ink" onClick={clear}>
+          <button
+            type="button"
+            className="text-[10px] text-ink-muted hover:text-ink"
+            onClick={clear}
+          >
             Clear
           </button>
         ) : undefined

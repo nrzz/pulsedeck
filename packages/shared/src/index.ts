@@ -733,7 +733,11 @@ export function createNamedPresets(): LayoutPreset[] {
         { id: 'stocks-1', type: 'stocks', settings: { symbols: ['AAPL', 'MSFT'] } },
         { id: 'fx-1', type: 'exchange', settings: { pairs: ['USD/INR', 'EUR/INR'] } },
       ],
-      layout: [cell('crypto-1', 0, 0, 4, 4), cell('stocks-1', 4, 0, 4, 4), cell('fx-1', 8, 0, 4, 3)],
+      layout: [
+        cell('crypto-1', 0, 0, 4, 4),
+        cell('stocks-1', 4, 0, 4, 4),
+        cell('fx-1', 8, 0, 4, 3),
+      ],
     },
     {
       id: 'preset-focus',

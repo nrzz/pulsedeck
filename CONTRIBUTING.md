@@ -86,7 +86,7 @@ With `npm run dev` (or a built `npm start`) running:
 npm run test:e2e:full
 ```
 
-That is the main E2E entry (catalog, APIs, tray/WorkerW contracts). Other `test:e2e*` scripts are narrower helpers.
+That is the main E2E entry. It asserts tray/WorkerW contracts, APIs (including **gold/silver** quotes, **news variety**, **GPU dual-adapter order**), all 47 widgets on the board, Stocks gear chips, and News scroll. Other `test:e2e*` scripts are narrower helpers.
 
 ## Screenshots for docs
 
@@ -120,16 +120,16 @@ Deeper design notes: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ## Useful scripts
 
-| Command               | Description                                      |
-| --------------------- | ------------------------------------------------ |
-| `npm run dev`         | Browser mode (server + Vite)                     |
-| `npm run dev:desktop` | Build then launch Electron                       |
-| `npm run build`       | Build all packages + server bundle               |
-| `npm run dist`        | Build Windows NSIS installer                     |
-| `npm start`           | Run production Node server only (contributor)    |
-| `npm run typecheck`   | Typecheck all packages                           |
-| `npm run lint`        | ESLint                                           |
-| `npm run test:e2e:full` | Full E2E suite                                 |
+| Command                 | Description                                   |
+| ----------------------- | --------------------------------------------- |
+| `npm run dev`           | Browser mode (server + Vite)                  |
+| `npm run dev:desktop`   | Build then launch Electron                    |
+| `npm run build`         | Build all packages + server bundle            |
+| `npm run dist`          | Build Windows NSIS installer                  |
+| `npm start`             | Run production Node server only (contributor) |
+| `npm run typecheck`     | Typecheck all packages                        |
+| `npm run lint`          | ESLint                                        |
+| `npm run test:e2e:full` | Full E2E suite                                |
 
 ## Reporting bugs
 

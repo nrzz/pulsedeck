@@ -21,12 +21,11 @@ export function LauncherWidget({ id, settings }: WidgetProps) {
   const [url, setUrl] = useState('');
 
   const fromSettings = settings.links as LinkItem[] | undefined;
-  const links: LinkItem[] =
-    fromSettings?.length
-      ? fromSettings
-      : config.quickLinks.length
-        ? config.quickLinks.map((l) => ({ id: l.id, title: l.title, url: l.url }))
-        : DEFAULT_LINKS;
+  const links: LinkItem[] = fromSettings?.length
+    ? fromSettings
+    : config.quickLinks.length
+      ? config.quickLinks.map((l) => ({ id: l.id, title: l.title, url: l.url }))
+      : DEFAULT_LINKS;
 
   const save = (next: LinkItem[]) => {
     updateWidgetSettings(id, {
@@ -91,7 +90,11 @@ export function LauncherWidget({ id, settings }: WidgetProps) {
             >
               <Plus size={14} /> Add button
             </button>
-            <button type="button" className="btn-accent w-full justify-center" onClick={() => setEditing(false)}>
+            <button
+              type="button"
+              className="btn-accent w-full justify-center"
+              onClick={() => setEditing(false)}
+            >
               Done
             </button>
           </div>

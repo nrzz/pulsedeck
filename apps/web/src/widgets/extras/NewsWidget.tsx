@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Newspaper, RefreshCw } from 'lucide-react';
-import {
-  NEWS_SUGGESTIONS,
-  NEWS_TOPICS,
-  type NewsItem,
-  type NewsTopicId,
-} from '@pulsedeck/shared';
+import { NEWS_SUGGESTIONS, NEWS_TOPICS, type NewsItem, type NewsTopicId } from '@pulsedeck/shared';
 import { WidgetShell } from '../../components/WidgetShell';
 import { useDashboard } from '../../store/dashboard';
 import { persistConfig } from '../../hooks/useWebSocket';
@@ -25,17 +20,18 @@ function formatWhen(raw?: string): string {
   if (!raw) return '';
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return raw.slice(0, 16);
-  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
-async function loadNews(
-  widgetId: string,
-  settings: NewsSettings,
-): Promise<void> {
-  const topics = (settings.topics?.length ? settings.topics : ['technology', 'world', 'india']).slice(
-    0,
-    8,
-  );
+async function loadNews(widgetId: string, settings: NewsSettings): Promise<void> {
+  const topics = (
+    settings.topics?.length ? settings.topics : ['technology', 'world', 'india']
+  ).slice(0, 8);
   const feeds = (settings.feeds || []).slice(0, 3);
   const limit = Math.min(40, Math.max(6, settings.limit ?? 20));
   const qs = new URLSearchParams({
@@ -60,10 +56,8 @@ export function NewsWidget({ id, settings }: WidgetProps) {
   const [customFeed, setCustomFeed] = useState('');
 
   const cfg: NewsSettings = useMemo(() => {
-    const topics =
-      (settings.topics as string[] | undefined) ??
-      defaults?.topics ??
-      ['technology', 'world', 'india', 'business'];
+    const topics = (settings.topics as string[] | undefined) ??
+      defaults?.topics ?? ['technology', 'world', 'india', 'business'];
     return {
       topics,
       feeds: (settings.feeds as string[] | undefined) ?? [],
@@ -76,7 +70,8 @@ export function NewsWidget({ id, settings }: WidgetProps) {
         (settings.refreshMinutes as number | undefined) ?? defaults?.refreshMinutes ?? 20,
       showSource: (settings.showSource as boolean | undefined) ?? defaults?.showSource ?? true,
       showTime: (settings.showTime as boolean | undefined) ?? defaults?.showTime ?? false,
-      density: (settings.density as 'compact' | 'comfy' | undefined) ?? defaults?.density ?? 'compact',
+      density:
+        (settings.density as 'compact' | 'comfy' | undefined) ?? defaults?.density ?? 'compact',
     };
   }, [settings, defaults]);
 
@@ -98,6 +93,9 @@ export function NewsWidget({ id, settings }: WidgetProps) {
     [cfg, id, updateWidgetSettings],
   );
 
+  const topicsKey = (cfg.topics || []).join(',');
+  const feedsKey = (cfg.feeds || []).join(',');
+
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
@@ -115,9 +113,9 @@ export function NewsWidget({ id, settings }: WidgetProps) {
       cancelled = true;
       window.clearInterval(timer);
     };
-    // Re-fetch when topic/limit/feeds identity changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, (cfg.topics || []).join(','), (cfg.feeds || []).join(','), cfg.limit, cfg.refreshMinutes]);
+    // Intentionally key off topicsKey/feedsKey instead of cfg object identity
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cfg fields listed above
+  }, [id, topicsKey, feedsKey, cfg.limit, cfg.refreshMinutes]);
 
   const toggleTopic = (topicId: NewsTopicId) => {
     const set = new Set(cfg.topics || []);
@@ -135,7 +133,9 @@ export function NewsWidget({ id, settings }: WidgetProps) {
     body = (
       <div className="space-y-3 text-xs" data-no-drag>
         <div>
-          <div className="text-[10px] uppercase tracking-wide text-ink-muted mb-1.5">Suggestions</div>
+          <div className="text-[10px] uppercase tracking-wide text-ink-muted mb-1.5">
+            Suggestions
+          </div>
           <div className="flex flex-wrap gap-1">
             {NEWS_SUGGESTIONS.map((pack) => (
               <button
@@ -208,9 +208,7 @@ export function NewsWidget({ id, settings }: WidgetProps) {
             <select
               className="input !py-1 !text-xs"
               value={cfg.density}
-              onChange={(e) =>
-                void save({ density: e.target.value as 'compact' | 'comfy' }, false)
-              }
+              onChange={(e) => void save({ density: e.target.value as 'compact' | 'comfy' }, false)}
             >
               <option value="compact">Compact</option>
               <option value="comfy">Comfy</option>
@@ -320,7 +318,10 @@ export function NewsWidget({ id, settings }: WidgetProps) {
             )}
             {(cfg.showSource || cfg.showTime) && (
               <div className="text-[10px] text-ink-muted mt-0.5 truncate">
-                {[cfg.showSource ? item.source : null, cfg.showTime ? formatWhen(item.published) : null]
+                {[
+                  cfg.showSource ? item.source : null,
+                  cfg.showTime ? formatWhen(item.published) : null,
+                ]
                   .filter(Boolean)
                   .join(' · ')}
               </div>

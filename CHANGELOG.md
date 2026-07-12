@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.7] — 2026-07-12
+
+### Fixed
+
+- GPU enrichment always prefers discrete GPU (nvidia-smi) even when the GPU widget is not yet on the board
+- Prettier/format CI failures from prior patch bumps
+
+### Changed
+
+- Docs: GPU dual-adapter, gold/silver stocks, News scroll troubleshooting in INSTALL / WIDGETS / README
+- E2E (`test:e2e:full`) covers commodities, news variety, GPU order, Stocks gold/silver chips, News scroll
+
 ## [1.0.6] — 2026-07-12
 
 ### Fixed
@@ -107,7 +119,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grid drag/resize broken by CSS `transform` entrance animation on grid items
 - Packaged app crash from top-level `import.meta.url` in CJS server bundle
 
-[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.0.6...HEAD
+[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.0.7...HEAD
+[1.0.7]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.7
 [1.0.6]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.6
 [1.0.5]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.5
 [1.0.4]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.4

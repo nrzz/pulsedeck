@@ -32,7 +32,9 @@ export function Sparkline({ data, color = 'rgb(var(--accent))', height = 56 }: S
       const y = pad + (1 - (p.v - min) / span) * (h - pad * 2);
       return [x, y] as const;
     });
-    const line = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c[0].toFixed(2)},${c[1].toFixed(2)}`).join(' ');
+    const line = coords
+      .map((c, i) => `${i === 0 ? 'M' : 'L'}${c[0].toFixed(2)},${c[1].toFixed(2)}`)
+      .join(' ');
     const area = `${line} L${w},${h} L0,${h} Z`;
     return { line, area };
   }, [points]);

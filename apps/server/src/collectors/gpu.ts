@@ -145,12 +145,20 @@ function matchNvidia(gpu: GpuMetric, rows: NvidiaRow[], used: Set<number>): Nvid
 /**
  * Enrich si.graphics() controllers with real utilization.
  * systeminformation skips nvidia util when it is 0, and never fills Intel util on Windows.
+ * nvidia-smi + discrete-first sort always run; Windows PDH counters are optional (slower).
  */
-export async function enrichGpuMetrics(base: GpuMetric[]): Promise<GpuMetric[]> {
+export async function enrichGpuMetrics(
+  base: GpuMetric[],
+  options: { windowsCounters?: boolean } = {},
+): Promise<GpuMetric[]> {
   const gpus = base.map((g) => ({ ...g }));
   if (!gpus.length) return gpus;
 
-  const [nvidiaRows, luidUtils] = await Promise.all([fetchNvidiaSmi(), fetchWindowsGpuUtilsByLuid()]);
+  const wantCounters = options.windowsCounters !== false && process.platform === 'win32';
+  const [nvidiaRows, luidUtils] = await Promise.all([
+    fetchNvidiaSmi(),
+    wantCounters ? fetchWindowsGpuUtilsByLuid() : Promise.resolve([] as number[]),
+  ]);
 
   const usedNvidia = new Set<number>();
   const nvidiaUtils: number[] = [];

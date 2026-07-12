@@ -61,7 +61,8 @@ export function BandwidthCapWidget({ id, settings }: WidgetProps) {
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${percent}%`,
-                background: percent > 90 ? '#f87171' : percent > 75 ? '#fbbf24' : 'rgb(var(--accent))',
+                background:
+                  percent > 90 ? '#f87171' : percent > 75 ? '#fbbf24' : 'rgb(var(--accent))',
               }}
             />
           </div>

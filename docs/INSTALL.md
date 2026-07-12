@@ -9,7 +9,7 @@ PulseDeck is a **Windows desktop app**. Download the installer from GitHub Relea
 ## 1. Download
 
 1. Open **[Releases → Latest](https://github.com/nrzz/pulsedeck/releases/latest)**
-2. Download **`PulseDeck-Setup-x.x.x.exe`** (current: **1.0.6**)
+2. Download **`PulseDeck-Setup-x.x.x.exe`** (current: **1.0.7**)
 3. Double-click the file and follow the installer
 4. Launch **PulseDeck** from the Start menu or desktop shortcut
 
@@ -32,21 +32,21 @@ PulseDeck runs a local server on `127.0.0.1` only. Allow **private networks** if
 
 You should see:
 
-| Expect | Detail |
-| ------ | ------ |
-| Glass widgets on the wallpaper | Board is **pinned behind apps** by default |
-| Toolbar | **Edit · Add · Presets · Customize** (always visible unless locked) |
-| Close window | Hides to the **system tray** (does not quit) |
-| Tray click / right-click | Opens the menu — board stays visible (including tray `^`) |
+| Expect                         | Detail                                                              |
+| ------------------------------ | ------------------------------------------------------------------- |
+| Glass widgets on the wallpaper | Board is **pinned behind apps** by default                          |
+| Toolbar                        | **Edit · Add · Presets · Customize** (always visible unless locked) |
+| Close window                   | Hides to the **system tray** (does not quit)                        |
+| Tray click / right-click       | Opens the menu — board stays visible (including tray `^`)           |
 
 ![Full dashboard view](screenshot-dashboard.png)
 
 ### Hotkeys
 
-| Shortcut | Action |
-| -------- | ------ |
-| **Ctrl+Alt+P** | Show / hide board |
-| **Ctrl+Alt+E** | Edit layout |
+| Shortcut       | Action                        |
+| -------------- | ----------------------------- |
+| **Ctrl+Alt+P** | Show / hide board             |
+| **Ctrl+Alt+E** | Edit layout                   |
 | **Ctrl+Alt+L** | Lock / unlock (click-through) |
 
 ### Optional tray items
@@ -73,10 +73,10 @@ To add widgets: **Edit → Add** → search or pick a category → click a type.
 
 ## Where files live
 
-| Item | Location |
-| ---- | -------- |
-| App install | Usually `%LOCALAPPDATA%\Programs\PulseDeck\` |
-| Layout & settings | `%APPDATA%\PulseDeck\config.json` |
+| Item              | Location                                     |
+| ----------------- | -------------------------------------------- |
+| App install       | Usually `%LOCALAPPDATA%\Programs\PulseDeck\` |
+| Layout & settings | `%APPDATA%\PulseDeck\config.json`            |
 
 ```powershell
 explorer $env:APPDATA\PulseDeck
@@ -90,28 +90,31 @@ explorer $env:APPDATA\PulseDeck
 
 1. Tray → **Quit**
 2. Delete `%APPDATA%\PulseDeck\config.json`
-3. Start PulseDeck again  
+3. Start PulseDeck again
 
 Or use **Settings → Reset to defaults** in the app.
 
 **Uninstall**
 
-- Windows **Settings → Apps → PulseDeck → Uninstall**, or the Start menu uninstaller  
+- Windows **Settings → Apps → PulseDeck → Uninstall**, or the Start menu uninstaller
 - Config may remain under `%APPDATA%\PulseDeck` — delete that folder for a clean slate
 
 ---
 
 ## Troubleshooting
 
-| Problem | Fix |
-| ------- | --- |
-| Won’t start / blank window | Quit from tray, delete `%APPDATA%\PulseDeck\config.json`, relaunch |
-| Board disappears on tray `^` | Update to **1.0.3+** (WorkerW pin); tray should only open the menu |
-| Installer fails to start with `path` / `undefined` | Update to **1.0.3+** — v1.0.1 had a packaged-server bug |
-| No live metrics | Wait a few seconds on first launch (Windows WMI warmup) |
-| Crypto / weather / news empty | Need internet access |
-| Two instances | PulseDeck is single-instance — second launch focuses the first |
-| High memory | Prefer Minimal/System packs; News tray is titles-only |
+| Problem                                            | Fix                                                                |
+| -------------------------------------------------- | ------------------------------------------------------------------ |
+| Won’t start / blank window                         | Quit from tray, delete `%APPDATA%\PulseDeck\config.json`, relaunch |
+| Board disappears on tray `^`                       | Update to **1.0.3+** (WorkerW pin); tray should only open the menu |
+| Installer fails to start with `path` / `undefined` | Update to **1.0.3+** — v1.0.1 had a packaged-server bug            |
+| GPU util stuck at **0.0%** / Intel “+1 more”       | Update to **1.0.6+** — discrete GPU first; nvidia-smi + counters   |
+| Can't pick gold/silver in Stocks                   | Update to **1.0.5+** — Stocks gear → Gold ETF / Silver ETF chips   |
+| News one-per-topic / no scroll                     | Update to **1.0.4+** — denser mix + scrollable tray                |
+| No live metrics                                    | Wait a few seconds on first launch (Windows WMI warmup)            |
+| Crypto / weather / news empty                      | Need internet access                                               |
+| Two instances                                      | PulseDeck is single-instance — second launch focuses the first     |
+| High memory                                        | Prefer Minimal/System packs; News tray is titles-only              |
 
 Still stuck? [Open an issue](https://github.com/nrzz/pulsedeck/issues) with Windows version, PulseDeck version, and steps to reproduce.
 
@@ -120,6 +123,3 @@ Still stuck? [Open an issue](https://github.com/nrzz/pulsedeck/issues) with Wind
 ## Building from source?
 
 For contributors only — see [CONTRIBUTING.md](../CONTRIBUTING.md).
-
-
-

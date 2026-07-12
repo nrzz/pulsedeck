@@ -21,7 +21,7 @@ Live CPU, RAM, GPU, disks, network, crypto, stocks, weather, news, and more on a
 **Most people only need the installer.** You do not need Node.js or this repository.
 
 1. Open **[latest release](https://github.com/nrzz/pulsedeck/releases/latest)**
-2. Download **`PulseDeck-Setup-1.0.6.exe`** (or the newest `PulseDeck-Setup-x.x.x.exe`)
+2. Download **`PulseDeck-Setup-1.0.7.exe`** (or the newest `PulseDeck-Setup-x.x.x.exe`)
 3. Run it — if SmartScreen appears: **More info → Run anyway**
 4. Launch **PulseDeck** from the Start menu
 
@@ -33,13 +33,13 @@ Full guide: **[docs/INSTALL.md](docs/INSTALL.md)**
 
 ## What you get
 
-| | |
-| --- | --- |
-| **Desktop pin** | Stays on the wallpaper layer; opening the tray `^` no longer hides the board |
-| **47 widgets** | System, network, finance, clocks, weather, **News tray**, calendar, todo, timer, … |
-| **One-click packs** | Minimal · System · Network · Finance · Focus · Full monitor |
-| **Customize** | Themes, accents, density, scale, grid columns, news defaults, export/import |
-| **Tray + hotkeys** | Click tray for menu · **Ctrl+Alt+P** show/hide · **E** edit · **L** lock |
+|                     |                                                                                    |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| **Desktop pin**     | Stays on the wallpaper layer; opening the tray `^` no longer hides the board       |
+| **47 widgets**      | System, network, finance, clocks, weather, **News tray**, calendar, todo, timer, … |
+| **One-click packs** | Minimal · System · Network · Finance · Focus · Full monitor                        |
+| **Customize**       | Themes, accents, density, scale, grid columns, news defaults, export/import        |
+| **Tray + hotkeys**  | Click tray for menu · **Ctrl+Alt+P** show/hide · **E** edit · **L** lock           |
 
 <p align="center">
   <img src="docs/screenshot-customize.png" alt="Customize settings panel" width="700" />
@@ -51,15 +51,15 @@ Full guide: **[docs/INSTALL.md](docs/INSTALL.md)**
 
 ## Everyday use
 
-| Action | How |
-| ------ | --- |
-| Show / hide board | **Ctrl+Alt+P** or tray → Show / Hide |
-| Edit layout (drag / resize) | Toolbar **Edit** or **Ctrl+Alt+E** |
-| Add a widget | Edit → **Add** (search + categories) |
-| Themes & packs | Toolbar **Customize** or **Presets** |
-| Lock (click-through) | **Ctrl+Alt+L** or tray → Lock |
-| Float above apps | Tray → **Float over apps** (optional) |
-| Quit fully | Tray → **Quit** |
+| Action                      | How                                   |
+| --------------------------- | ------------------------------------- |
+| Show / hide board           | **Ctrl+Alt+P** or tray → Show / Hide  |
+| Edit layout (drag / resize) | Toolbar **Edit** or **Ctrl+Alt+E**    |
+| Add a widget                | Edit → **Add** (search + categories)  |
+| Themes & packs              | Toolbar **Customize** or **Presets**  |
+| Lock (click-through)        | **Ctrl+Alt+L** or tray → Lock         |
+| Float above apps            | Tray → **Float over apps** (optional) |
+| Quit fully                  | Tray → **Quit**                       |
 
 Your layout is saved in `%APPDATA%\PulseDeck\config.json`.
 
@@ -69,10 +69,10 @@ Your layout is saved in `%APPDATA%\PulseDeck\config.json`.
 
 ~**47** built-in types:
 
-- **System** — CPU, RAM, GPU, disks, I/O, temps, swap, frequency, processes, sensors, alerts
+- **System** — CPU, RAM, GPU (dual-GPU util), disks, I/O, temps, swap, frequency, processes, sensors, alerts
 - **Network** — speed, Wi‑Fi, IPs, ping, adapters, graph, ports, data usage
-- **Finance** — crypto, stocks, FX, market strip, portfolio
-- **Extras** — clocks, weather (Bangalore default), AQI, **News tray** (topics + RSS), calendar, todo, timer, notes, launcher
+- **Finance** — crypto, stocks (**gold/silver** presets), FX, market strip, portfolio
+- **Extras** — clocks, weather (Bangalore default), AQI, **News tray** (scrollable multi-topic), calendar, todo, timer, notes, launcher
 
 Full list and settings: **[docs/WIDGETS.md](docs/WIDGETS.md)**
 
@@ -103,6 +103,3 @@ Internals: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Authoring widgets: [d
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
-
-

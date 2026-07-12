@@ -135,10 +135,11 @@ export function AddWidgetModal() {
                             ? {
                                 ...(w.defaultSettings || {}),
                                 ...(newsDefaults || {}),
-                                topics: newsDefaults?.topics ?? (w.defaultSettings?.topics as string[]) ?? [
-                                  'technology',
-                                  'world',
-                                ],
+                                topics: newsDefaults?.topics ??
+                                  (w.defaultSettings?.topics as string[]) ?? [
+                                    'technology',
+                                    'world',
+                                  ],
                               }
                             : { ...(w.defaultSettings || {}) };
                         addWidget(
@@ -157,7 +158,9 @@ export function AddWidgetModal() {
                       }}
                     >
                       <span className="font-medium">{w.name}</span>
-                      <span className="text-[11px] text-ink-muted font-normal">{w.description}</span>
+                      <span className="text-[11px] text-ink-muted font-normal">
+                        {w.description}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -165,7 +168,9 @@ export function AddWidgetModal() {
             );
           })}
           {!widgets.length && (
-            <div className="text-sm text-ink-muted text-center py-8">No widgets match “{query}”</div>
+            <div className="text-sm text-ink-muted text-center py-8">
+              No widgets match “{query}”
+            </div>
           )}
         </div>
         <div className="p-3 text-[11px] text-ink-muted border-t border-white/5">

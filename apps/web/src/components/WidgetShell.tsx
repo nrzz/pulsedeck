@@ -51,7 +51,7 @@ export function WidgetShell({
           data-testid="alert-dot"
         />
       )}
-          {editMode && (
+      {editMode && (
         <div className="pointer-events-none absolute inset-0 rounded-[var(--card-radius)] bg-accent/[0.03]" />
       )}
 

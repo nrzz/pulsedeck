@@ -231,15 +231,25 @@ function toggleBoard() {
   else showBoard();
 }
 
-function resetBoardCorner(corner: Corner = 'top-right', size: 'compact' | 'medium' | 'wide' = 'compact') {
+function resetBoardCorner(
+  corner: Corner = 'top-right',
+  size: 'compact' | 'medium' | 'wide' = 'compact',
+) {
   if (!mainWindow || mainWindow.isDestroyed()) return;
-  const display =
-    screen.getDisplayMatching(mainWindow.getBounds()) || screen.getPrimaryDisplay();
+  const display = screen.getDisplayMatching(mainWindow.getBounds()) || screen.getPrimaryDisplay();
   const wa = display.workArea;
   const width =
-    size === 'wide' ? Math.min(1100, wa.width - 40) : size === 'medium' ? Math.min(900, wa.width - 40) : Math.min(720, wa.width - 40);
+    size === 'wide'
+      ? Math.min(1100, wa.width - 40)
+      : size === 'medium'
+        ? Math.min(900, wa.width - 40)
+        : Math.min(720, wa.width - 40);
   const height =
-    size === 'wide' ? Math.min(700, wa.height - 40) : size === 'medium' ? Math.min(600, wa.height - 40) : Math.min(520, wa.height - 40);
+    size === 'wide'
+      ? Math.min(700, wa.height - 40)
+      : size === 'medium'
+        ? Math.min(600, wa.height - 40)
+        : Math.min(520, wa.height - 40);
   const margin = 24;
   const x =
     corner === 'top-left' || corner === 'bottom-left'
@@ -467,10 +477,13 @@ function registerIpc() {
     setAlwaysOnTopPref(Boolean(next));
     return shellPrefs.alwaysOnTop;
   });
-  ipcMain.handle('pulsedeck:reset-corner', (_e, corner?: Corner, size?: 'compact' | 'medium' | 'wide') => {
-    resetBoardCorner(corner || 'top-right', size || 'compact');
-    return true;
-  });
+  ipcMain.handle(
+    'pulsedeck:reset-corner',
+    (_e, corner?: Corner, size?: 'compact' | 'medium' | 'wide') => {
+      resetBoardCorner(corner || 'top-right', size || 'compact');
+      return true;
+    },
+  );
   ipcMain.handle('pulsedeck:list-displays', () =>
     screen.getAllDisplays().map((d) => ({
       id: d.id,

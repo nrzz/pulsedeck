@@ -190,8 +190,7 @@ async function bootstrapExternal(config: AppConfig) {
   }
 
   const aqiCfg = widgets.find((w) => w.type === 'aqi')?.settings as
-    | { lat?: number; lon?: number; city?: string }
-    | undefined;
+    { lat?: number; lon?: number; city?: string } | undefined;
   if (aqiCfg || widgets.some((w) => w.type === 'aqi')) {
     const lat = aqiCfg?.lat ?? 12.9716;
     const lon = aqiCfg?.lon ?? 77.5946;
@@ -207,8 +206,7 @@ async function bootstrapExternal(config: AppConfig) {
   }
 
   const headlineCfg = widgets.find((w) => w.type === 'headline')?.settings as
-    | { feedUrl?: string }
-    | undefined;
+    { feedUrl?: string } | undefined;
   if (headlineCfg || widgets.some((w) => w.type === 'headline')) {
     const url = headlineCfg?.feedUrl || 'https://news.ycombinator.com/rss';
     tasks.push(
@@ -286,9 +284,7 @@ export function useWebSocket() {
               setWeather(msg.payload as WeatherData);
               break;
             case 'config': {
-              const { config: next, changed } = migrateConfig(
-                msg.payload as AppConfig,
-              );
+              const { config: next, changed } = migrateConfig(msg.payload as AppConfig);
               setConfig(next);
               applyTheme();
               void bootstrapExternal(next);

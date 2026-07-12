@@ -1,7 +1,12 @@
 import { useRef, useState } from 'react';
 import { Download, Upload, X } from 'lucide-react';
 import type { AppConfig, LayoutPreset } from '@pulsedeck/shared';
-import { createDefaultConfig, createNamedPresets, NEWS_SUGGESTIONS, NEWS_TOPICS } from '@pulsedeck/shared';
+import {
+  createDefaultConfig,
+  createNamedPresets,
+  NEWS_SUGGESTIONS,
+  NEWS_TOPICS,
+} from '@pulsedeck/shared';
 import { useDashboard } from '../store/dashboard';
 import { persistConfig } from '../hooks/useWebSocket';
 import { useToast } from '../store/toast';
@@ -193,8 +198,8 @@ export function SettingsPanel() {
           <section className="space-y-3" data-testid="news-defaults">
             <h3 className="widget-title">News tray defaults</h3>
             <p className="text-xs text-ink-muted">
-              Applied when you add a News tray. Gear on the widget for full per-tray control.
-              Titles + links only — low memory.
+              Applied when you add a News tray. Gear on the widget for full per-tray control. Titles
+              + links only — low memory.
             </p>
             <div>
               <div className="text-[10px] uppercase tracking-wide text-ink-muted mb-1.5">
@@ -231,7 +236,12 @@ export function SettingsPanel() {
               <div className="flex flex-wrap gap-1">
                 {NEWS_TOPICS.map((t) => {
                   const selected = (
-                    config.shell?.newsDefaults?.topics ?? ['technology', 'world', 'india', 'business']
+                    config.shell?.newsDefaults?.topics ?? [
+                      'technology',
+                      'world',
+                      'india',
+                      'business',
+                    ]
                   ).includes(t.id);
                   return (
                     <button
@@ -487,7 +497,9 @@ export function SettingsPanel() {
 
           <section className="space-y-3" data-testid="layout-packs">
             <h3 className="widget-title">Layout packs</h3>
-            <p className="text-xs text-ink-muted">One-click boards (Minimal, System, Network, Finance, Focus, Full).</p>
+            <p className="text-xs text-ink-muted">
+              One-click boards (Minimal, System, Network, Finance, Focus, Full).
+            </p>
             <div className="grid grid-cols-2 gap-2">
               {createNamedPresets().map((pack) => (
                 <button

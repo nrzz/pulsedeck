@@ -9,7 +9,9 @@ export function MediaWidget({ id }: WidgetProps) {
 
   useEffect(() => {
     const poll = () => {
-      const bridge = window.pulsedeck as (typeof window.pulsedeck & { media?: MediaInfo; getMedia?: () => MediaInfo | null }) | undefined;
+      const bridge = window.pulsedeck as
+        | (typeof window.pulsedeck & { media?: MediaInfo; getMedia?: () => MediaInfo | null })
+        | undefined;
       const info = bridge?.getMedia?.() ?? bridge?.media ?? null;
       setMedia(info);
     };

@@ -1,6 +1,6 @@
 {
   "name": "pulsedeck",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "private": true,
   "type": "module",
   "description": "Customizable Windows PC widget dashboard — system vitals, network, crypto, stocks & more",
@@ -50,9 +50,3 @@
     "node": ">=18"
   }
 }
-
-
-
-
-
-

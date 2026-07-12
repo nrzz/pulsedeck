@@ -106,29 +106,45 @@ async function refreshSlowMetrics(): Promise<void> {
   const first = slowCache.updatedAt === 0;
   const t = (ms: number) => (first ? Math.max(ms * 4, 8000) : ms);
 
-  const [graphics, fsSize, wifiConnections, battery, processes, osInfo, system, networkInterfaces, disksIO, cpuCurrentSpeed] =
-    await Promise.all([
-      withTimeout(si.graphics(), t(4000)),
-      withTimeout(si.fsSize(), t(5000)),
-      withTimeout(
-        si.wifiConnections().catch(() => [] as si.Systeminformation.WifiConnectionData[]),
-        t(3000),
-      ),
-      withTimeout(
-        si.battery().catch(() => null),
-        t(2500),
-      ),
-      withTimeout(si.processes(), t(8000)),
-      withTimeout(si.osInfo(), t(5000)),
-      withTimeout(si.system(), t(3000)),
-      withTimeout(si.networkInterfaces(), t(3000)),
-      needsDiskIO()
-        ? withTimeout(si.disksIO().catch(() => null), t(3000))
-        : Promise.resolve(null),
-      needsCpuSpeed()
-        ? withTimeout(si.cpuCurrentSpeed().catch(() => null), t(2500))
-        : Promise.resolve(null),
-    ]);
+  const [
+    graphics,
+    fsSize,
+    wifiConnections,
+    battery,
+    processes,
+    osInfo,
+    system,
+    networkInterfaces,
+    disksIO,
+    cpuCurrentSpeed,
+  ] = await Promise.all([
+    withTimeout(si.graphics(), t(4000)),
+    withTimeout(si.fsSize(), t(5000)),
+    withTimeout(
+      si.wifiConnections().catch(() => [] as si.Systeminformation.WifiConnectionData[]),
+      t(3000),
+    ),
+    withTimeout(
+      si.battery().catch(() => null),
+      t(2500),
+    ),
+    withTimeout(si.processes(), t(8000)),
+    withTimeout(si.osInfo(), t(5000)),
+    withTimeout(si.system(), t(3000)),
+    withTimeout(si.networkInterfaces(), t(3000)),
+    needsDiskIO()
+      ? withTimeout(
+          si.disksIO().catch(() => null),
+          t(3000),
+        )
+      : Promise.resolve(null),
+    needsCpuSpeed()
+      ? withTimeout(
+          si.cpuCurrentSpeed().catch(() => null),
+          t(2500),
+        )
+      : Promise.resolve(null),
+  ]);
 
   const time = si.time();
 
@@ -175,9 +191,7 @@ async function refreshSlowMetrics(): Promise<void> {
     }));
 
   const gpus = rawGpus.length
-    ? needsGpuEnrich()
-      ? await enrichGpuMetrics(rawGpus)
-      : rawGpus
+    ? await enrichGpuMetrics(rawGpus, { windowsCounters: needsGpuEnrich() })
     : [];
 
   const disks =
@@ -291,8 +305,7 @@ export async function collectMetrics(): Promise<SystemMetrics> {
         swapTotal: mem.swaptotal,
         swapUsed: mem.swapused,
         swapFree: mem.swapfree,
-        swapPercent:
-          mem.swaptotal > 0 ? Math.round((mem.swapused / mem.swaptotal) * 1000) / 10 : 0,
+        swapPercent: mem.swaptotal > 0 ? Math.round((mem.swapused / mem.swaptotal) * 1000) / 10 : 0,
       }
     : (lastFast?.memory ?? { total: 0, used: 0, free: 0, percent: 0 });
 

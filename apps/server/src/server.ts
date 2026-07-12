@@ -10,7 +10,15 @@ import type { AppConfig, WsMessage } from '@pulsedeck/shared';
 import { loadConfig, saveConfig, setDataDir } from './config.js';
 import { collectMetrics, setActiveWidgetTypes } from './collectors/metrics.js';
 import { pingHosts } from './collectors/ping.js';
-import { fetchCrypto, fetchStocks, fetchWeather, fetchExchange, fetchAqi, fetchHeadline, fetchNews } from './collectors/external.js';
+import {
+  fetchCrypto,
+  fetchStocks,
+  fetchWeather,
+  fetchExchange,
+  fetchAqi,
+  fetchHeadline,
+  fetchNews,
+} from './collectors/external.js';
 import { WsHub } from './ws-hub.js';
 
 /** Safe in ESM and in the Electron CJS server bundle (import.meta.url is empty there). */
@@ -311,9 +319,7 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
       return reply.sendFile('index.html');
     });
   } else if (!quiet) {
-    console.warn(
-      '[pulsedeck] Web UI dist not found. Tried:\n  ' + webDistCandidates.join('\n  '),
-    );
+    console.warn('[pulsedeck] Web UI dist not found. Tried:\n  ' + webDistCandidates.join('\n  '));
   }
 
   hub.startHeartbeat();

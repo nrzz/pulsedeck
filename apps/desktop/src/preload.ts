@@ -31,9 +31,10 @@ const bridge: PulseDeckBridge = {
     ipcRenderer.invoke('pulsedeck:set-always-on-top', v) as Promise<boolean>,
   resetCorner: (corner, size) =>
     ipcRenderer.invoke('pulsedeck:reset-corner', corner, size) as Promise<boolean>,
-  listDisplays: () => ipcRenderer.invoke('pulsedeck:list-displays') as Promise<
-    { id: number; label: string; primary: boolean; bounds: object; workArea: object }[]
-  >,
+  listDisplays: () =>
+    ipcRenderer.invoke('pulsedeck:list-displays') as Promise<
+      { id: number; label: string; primary: boolean; bounds: object; workArea: object }[]
+    >,
   onLockedChanged: (cb) => {
     const handler = (_: Electron.IpcRendererEvent, locked: boolean) => cb(locked);
     ipcRenderer.on('pulsedeck:locked-changed', handler);
