@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.6] — 2026-07-12
+
+### Fixed
+
+- **GPU util stuck at 0.0%** on Intel UHD while the discrete GPU was hidden as “+1 more”
+- Reads NVIDIA util from **nvidia-smi** (including real 0%), Intel/other from Windows GPU Engine counters
+- Discrete GPU (RTX/AMD) shown first; second GPU listed with its own util/temp
+
 ## [1.0.5] — 2026-07-12
 
 ### Added
@@ -99,7 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grid drag/resize broken by CSS `transform` entrance animation on grid items
 - Packaged app crash from top-level `import.meta.url` in CJS server bundle
 
-[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.0.5...HEAD
+[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.0.6...HEAD
+[1.0.6]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.6
 [1.0.5]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.5
 [1.0.4]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.4
 [1.0.3]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.3

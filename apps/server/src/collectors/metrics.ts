@@ -1,5 +1,6 @@
 import si from 'systeminformation';
 import type { SystemMetrics } from '@pulsedeck/shared';
+import { enrichGpuMetrics } from './gpu.js';
 
 let publicIpCache: { ip?: string; fetchedAt: number } = { fetchedAt: 0 };
 const PUBLIC_IP_TTL = 10 * 60 * 1000;
@@ -53,6 +54,15 @@ function needsCpuSpeed(): boolean {
   return (
     activeWidgetTypes.size === 0 ||
     activeWidgetTypes.has('cpu-freq') ||
+    activeWidgetTypes.has('sensors')
+  );
+}
+
+function needsGpuEnrich(): boolean {
+  return (
+    activeWidgetTypes.size === 0 ||
+    activeWidgetTypes.has('gpu') ||
+    activeWidgetTypes.has('temps') ||
     activeWidgetTypes.has('sensors')
   );
 }
@@ -153,15 +163,22 @@ async function refreshSlowMetrics(): Promise<void> {
       : slowCache.processes;
 
   const controllers = graphics?.controllers ?? [];
-  const gpus = controllers
+  const rawGpus = controllers
     .filter((c) => c.model)
     .map((c) => ({
       model: c.model || 'GPU',
-      utilization: c.utilizationGpu ?? 0,
-      memoryUsed: c.memoryUsed,
-      memoryTotal: c.memoryTotal,
-      temperature: c.temperatureGpu,
+      // si omits utilizationGpu when nvidia-smi reports 0 (falsy check) — treat as unknown here
+      utilization: typeof c.utilizationGpu === 'number' ? c.utilizationGpu : 0,
+      memoryUsed: c.memoryUsed ?? undefined,
+      memoryTotal: c.memoryTotal ?? c.vram ?? undefined,
+      temperature: c.temperatureGpu ?? undefined,
     }));
+
+  const gpus = rawGpus.length
+    ? needsGpuEnrich()
+      ? await enrichGpuMetrics(rawGpus)
+      : rawGpus
+    : [];
 
   const disks =
     fsSize && fsSize.length
