@@ -3,7 +3,10 @@
   "version": "1.1.0",
   "private": true,
   "description": "PulseDeck desktop shell (Windows + Linux)",
-  "author": "PulseDeck contributors",
+  "author": {
+    "name": "PulseDeck contributors",
+    "email": "noreply@users.noreply.github.com"
+  },
   "homepage": "https://github.com/nrzz/pulsedeck",
   "main": "dist-electron/main.js",
   "scripts": {
