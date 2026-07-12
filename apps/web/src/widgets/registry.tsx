@@ -198,7 +198,7 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     name: 'Network Speed',
     category: 'network',
     description: 'Live up/down speeds',
-    defaultSize: { w: 4, h: 3, minW: 3, minH: 2 },
+    defaultSize: { w: 4, h: 3, minW: 3, minH: 3 },
     component: NetworkSpeedWidget,
   },
   wifi: {

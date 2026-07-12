@@ -364,14 +364,14 @@ export function SettingsPanel() {
               <div>
                 <div className="flex justify-between text-xs text-ink-muted mb-1">
                   <span>Board glass</span>
-                  <span>{Math.round((config.shell?.boardOpacity ?? 0.92) * 100)}%</span>
+                  <span>{Math.round((config.shell?.boardOpacity ?? 0.35) * 100)}%</span>
                 </div>
                 <input
                   type="range"
                   min={0.35}
                   max={1}
                   step={0.05}
-                  value={config.shell?.boardOpacity ?? 0.92}
+                  value={config.shell?.boardOpacity ?? 0.35}
                   className="w-full accent-[rgb(var(--accent))]"
                   data-testid="board-opacity"
                   onChange={(e) =>

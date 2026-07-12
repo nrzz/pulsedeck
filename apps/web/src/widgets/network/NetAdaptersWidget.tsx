@@ -19,15 +19,17 @@ export function NetAdaptersWidget({ id }: WidgetProps) {
       ) : ifaces.length === 0 ? (
         <div className="text-sm text-ink-muted">No adapters</div>
       ) : (
-        <div className="space-y-2 max-h-full overflow-hidden">
-          {ifaces.map((n) => (
-            <div key={n.iface} className="rounded-lg bg-surface-3/40 p-2 text-xs">
-              <div className="flex justify-between items-center gap-2 mb-1">
+        <div className="space-y-1.5 max-h-full overflow-hidden">
+          {ifaces.slice(0, 3).map((n) => (
+            <div key={n.iface} className="rounded-lg bg-surface-3/40 p-1.5 text-[11px]">
+              <div className="flex justify-between items-center gap-2 mb-0.5">
                 <span className="font-medium truncate">{n.iface}</span>
                 <span
                   className={cn(
                     'shrink-0 px-1.5 py-0.5 rounded text-[10px]',
-                    n.operstate === 'up' ? 'bg-emerald-400/20 text-emerald-300' : 'bg-surface-3 text-ink-muted',
+                    n.operstate === 'up'
+                      ? 'bg-emerald-400/20 text-emerald-300'
+                      : 'bg-surface-3 text-ink-muted',
                   )}
                 >
                   {n.operstate}
@@ -43,6 +45,9 @@ export function NetAdaptersWidget({ id }: WidgetProps) {
               </div>
             </div>
           ))}
+          {ifaces.length > 3 && (
+            <div className="text-[10px] text-ink-muted">+{ifaces.length - 3} more</div>
+          )}
         </div>
       )}
     </WidgetShell>

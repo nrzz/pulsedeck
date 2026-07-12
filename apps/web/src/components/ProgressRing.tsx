@@ -10,8 +10,8 @@ interface ProgressRingProps {
 
 export function ProgressRing({
   value,
-  size = 88,
-  stroke = 8,
+  size = 56,
+  stroke = 6,
   label,
   color = 'rgb(var(--accent))',
 }: ProgressRingProps) {

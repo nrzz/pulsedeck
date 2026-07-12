@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import GridLayout, { WidthProvider, type Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
-import { createNamedPresets } from '@pulsedeck/shared';
 import { useDashboard } from '../store/dashboard';
 import { getWidget } from '../widgets/registry';
 import { persistConfig } from '../hooks/useWebSocket';
@@ -38,7 +37,6 @@ export function DashboardGrid() {
   const editMode = useDashboard((s) => s.editMode);
   const updateLayout = useDashboard((s) => s.updateLayout);
   const setConfig = useDashboard((s) => s.setConfig);
-  const setSettingsOpen = useDashboard((s) => s.setSettingsOpen);
   const showToast = useToast((s) => s.show);
   const [isInteracting, setIsInteracting] = useState(false);
 
@@ -54,7 +52,6 @@ export function DashboardGrid() {
 
   const storeLayout = useMemo(() => toRglLayout(preset.layout), [preset.layout]);
 
-  // Local layout so parent re-renders don't fight RGL mid-drag
   const [localLayout, setLocalLayout] = useState<Layout[]>(storeLayout);
 
   useEffect(() => {
@@ -88,29 +85,13 @@ export function DashboardGrid() {
     [updateLayout, setConfig, showToast],
   );
 
-  const applyPack = useCallback(
-    async (packId: string) => {
-      const pack = createNamedPresets().find((p) => p.id === packId);
-      if (!pack) return;
-      const others = config.presets.filter((p) => p.id !== pack.id);
-      const next = { ...config, presets: [...others, pack], activePresetId: pack.id };
-      setConfig(next);
-      try {
-        await persistConfig(next);
-        showToast(`Applied ${pack.name}`);
-      } catch {
-        showToast('Failed to apply pack');
-      }
-    },
-    [config, setConfig, showToast],
-  );
-
   const density = config.theme.density;
-  const rowHeight = density === 'compact' ? 56 : density === 'spacious' ? 88 : 72;
-  const margin: [number, number] =
-    density === 'compact' ? [10, 10] : density === 'spacious' ? [18, 18] : [14, 14];
+  const scale = Number(config.shell?.scale ?? 1) || 1;
+  const baseRow = density === 'compact' ? 56 : density === 'spacious' ? 88 : 72;
+  const rowHeight = Math.round(baseRow * scale);
+  const baseMargin = density === 'compact' ? 10 : density === 'spacious' ? 18 : 14;
+  const margin: [number, number] = [Math.round(baseMargin * scale), Math.round(baseMargin * scale)];
   const cols = config.shell?.gridCols ?? 12;
-  const empty = preset.widgets.length === 0;
 
   return (
     <div
@@ -118,35 +99,9 @@ export function DashboardGrid() {
         'w-full px-3 sm:px-4 pb-10 transition-all duration-300',
         editMode && 'edit-canvas',
       )}
-      style={{ zoom: config.shell?.scale ?? 1 }}
+      style={{ ['--grid-guide-step' as string]: `${rowHeight + margin[1]}px` }}
       data-testid="dashboard-grid"
     >
-      {empty && (
-        <div
-          className="mx-auto max-w-md mt-16 mb-8 text-center space-y-4"
-          data-testid="empty-board-cta"
-        >
-          <h2 className="text-lg font-semibold">Your board is empty</h2>
-          <p className="text-sm text-ink-muted">Pick a layout pack to get started.</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {createNamedPresets()
-              .slice(0, 4)
-              .map((pack) => (
-                <button
-                  key={pack.id}
-                  type="button"
-                  className="btn-accent !text-sm"
-                  onClick={() => void applyPack(pack.id)}
-                >
-                  {pack.name}
-                </button>
-              ))}
-            <button type="button" className="btn !text-sm" onClick={() => setSettingsOpen(true)}>
-              Browse all
-            </button>
-          </div>
-        </div>
-      )}
       <AutoGrid
         className={cn('layout', isInteracting && 'is-interacting')}
         layout={localLayout}

@@ -15,20 +15,20 @@ export function SwapWidget({ id }: WidgetProps) {
       {!metrics ? (
         <WidgetSkeleton label="Loading swap" />
       ) : !hasSwap ? (
-        <div className="text-sm text-ink-muted">No swap configured</div>
+        <div className="text-sm text-ink-muted h-full flex items-center">No swap configured</div>
       ) : (
-        <div className="flex gap-3 items-center h-full">
+        <div className="flex gap-2.5 items-center h-full min-h-0 overflow-hidden">
           <ProgressRing
             value={mem.swapPercent ?? 0}
             label="used"
-            size={72}
-            stroke={7}
+            size={56}
+            stroke={6}
             color="#a78bfa"
           />
-          <div className="flex-1 min-w-0 text-xs space-y-1">
-            <div className="font-mono tabular-nums">{formatBytes(mem.swapUsed ?? 0)} used</div>
-            <div className="text-ink-muted tabular-nums">of {formatBytes(mem.swapTotal ?? 0)}</div>
-            <div className="text-ink-muted tabular-nums">{formatBytes(mem.swapFree ?? 0)} free</div>
+          <div className="flex-1 min-w-0 text-[11px] space-y-0.5 overflow-hidden">
+            <div className="font-mono tabular-nums truncate">{formatBytes(mem.swapUsed ?? 0)} used</div>
+            <div className="text-ink-muted tabular-nums truncate">of {formatBytes(mem.swapTotal ?? 0)}</div>
+            <div className="text-ink-muted tabular-nums truncate">{formatBytes(mem.swapFree ?? 0)} free</div>
           </div>
         </div>
       )}

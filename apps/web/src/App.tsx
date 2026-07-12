@@ -1,12 +1,14 @@
 import { useEffect } from 'react';
+import { createNamedPresets } from '@pulsedeck/shared';
 import { Header } from './components/Header';
 import { WidgetToolbar } from './components/WidgetToolbar';
 import { DashboardGrid } from './components/DashboardGrid';
 import { SettingsPanel } from './components/SettingsPanel';
 import { AddWidgetModal } from './components/AddWidgetModal';
 import { Toast } from './components/Toast';
-import { useWebSocket } from './hooks/useWebSocket';
+import { useWebSocket, persistConfig } from './hooks/useWebSocket';
 import { useDashboard } from './store/dashboard';
+import { useToast } from './store/toast';
 import { isWidgetShell } from './lib/shell';
 import { cn } from './lib/utils';
 
@@ -18,6 +20,10 @@ export default function App() {
   const editMode = useDashboard((s) => s.editMode);
   const setEditMode = useDashboard((s) => s.setEditMode);
   const setAddWidgetOpen = useDashboard((s) => s.setAddWidgetOpen);
+  const setSettingsOpen = useDashboard((s) => s.setSettingsOpen);
+  const config = useDashboard((s) => s.config);
+  const setConfig = useDashboard((s) => s.setConfig);
+  const showToast = useToast((s) => s.show);
   const widgetCount = useDashboard((s) => {
     const p = s.config.presets.find((x) => x.id === s.config.activePresetId) ?? s.config.presets[0];
     return p?.widgets.length ?? 0;
@@ -36,6 +42,20 @@ export default function App() {
       document.body.classList.remove('shell-widget');
     };
   }, [widgetShell]);
+
+  const applyPack = async (packId: string) => {
+    const pack = createNamedPresets().find((p) => p.id === packId);
+    if (!pack) return;
+    const others = config.presets.filter((p) => p.id !== pack.id);
+    const next = { ...config, presets: [...others, pack], activePresetId: pack.id };
+    setConfig(next);
+    try {
+      await persistConfig(next);
+      showToast(`Applied ${pack.name}`);
+    } catch {
+      showToast('Failed to apply pack');
+    }
+  };
 
   return (
     <div
@@ -58,23 +78,42 @@ export default function App() {
           </div>
         )}
         {widgetCount === 0 ? (
-          <div className="mx-4 glass-card p-12 text-center max-w-lg">
-            <div className="mx-auto mb-4 h-14 w-14 rounded-2xl bg-accent/20 flex items-center justify-center text-accent text-2xl font-semibold">
+          <div
+            className="mx-4 glass-card p-8 text-center max-w-lg"
+            data-testid="empty-board-cta"
+          >
+            <div className="mx-auto mb-3 h-12 w-12 rounded-2xl bg-accent/20 flex items-center justify-center text-accent text-xl font-semibold">
               +
             </div>
-            <h2 className="text-2xl font-semibold mb-2 tracking-tight">Build your deck</h2>
-            <p className="text-ink-muted text-sm mb-6 leading-relaxed">
-              Turn on Edit mode, add widgets, then drag headers to arrange and resize from the
-              corner.
+            <h2 className="text-xl font-semibold mb-1.5 tracking-tight">Your board is empty</h2>
+            <p className="text-ink-muted text-sm mb-4 leading-relaxed">
+              Pick a layout pack to get started, or add widgets one by one.
             </p>
+            <div className="flex flex-wrap justify-center gap-2 mb-4">
+              {createNamedPresets()
+                .slice(0, 4)
+                .map((pack) => (
+                  <button
+                    key={pack.id}
+                    type="button"
+                    className="btn-accent !text-sm"
+                    onClick={() => void applyPack(pack.id)}
+                  >
+                    {pack.name}
+                  </button>
+                ))}
+              <button type="button" className="btn !text-sm" onClick={() => setSettingsOpen(true)}>
+                Browse all
+              </button>
+            </div>
             <div className="flex justify-center gap-2">
               {!editMode && (
-                <button type="button" className="btn-accent" onClick={() => setEditMode(true)}>
+                <button type="button" className="btn" onClick={() => setEditMode(true)}>
                   Enter Edit mode
                 </button>
               )}
               {editMode && (
-                <button type="button" className="btn-accent" onClick={() => setAddWidgetOpen(true)}>
+                <button type="button" className="btn" onClick={() => setAddWidgetOpen(true)}>
                   Add widget
                 </button>
               )}

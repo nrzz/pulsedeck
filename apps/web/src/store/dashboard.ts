@@ -201,7 +201,7 @@ export const useDashboard = create<DashboardState>((set, get) => ({
     root.classList.toggle('dark', theme.mode === 'dark');
     root.style.setProperty('--accent', hexToRgb(theme.accent));
     root.style.setProperty('--card-opacity', String(theme.cardOpacity));
-    root.style.setProperty('--board-opacity', String(shell?.boardOpacity ?? 0.92));
+    root.style.setProperty('--board-opacity', String(shell?.boardOpacity ?? 0.35));
     root.style.setProperty('--board-scale', String(shell?.scale ?? 1));
     const radius =
       theme.cornerRadius === 'sharp' ? '6px' : theme.cornerRadius === 'round' ? '20px' : '14px';

@@ -113,7 +113,7 @@ export function AddWidgetModal() {
             })}
           </div>
         </div>
-        <div className="overflow-y-auto p-4 space-y-5">
+        <div className="overflow-y-auto p-4 space-y-5 flex-1 min-h-0">
           {(cat === 'all' ? CATEGORIES : [cat]).map((category) => {
             const list = widgets.filter((w) => w.category === category);
             if (!list.length) return null;
