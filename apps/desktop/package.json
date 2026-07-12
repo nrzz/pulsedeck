@@ -1,8 +1,8 @@
 {
   "name": "@pulsedeck/desktop",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "private": true,
-  "description": "PulseDeck Windows desktop shell",
+  "description": "PulseDeck desktop shell (Windows + Linux)",
   "author": "PulseDeck contributors",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -10,7 +10,9 @@
     "dev": "npm run build && electron .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "pack": "npm run build && node ../../scripts/with-app-builder.mjs electron-builder --dir --config.electronDist=../../node_modules/electron/dist",
-    "dist": "npm run build && node ../../scripts/bundle-server.mjs && node ../../scripts/with-app-builder.mjs electron-builder --win nsis --config.electronDist=../../node_modules/electron/dist --config.npmRebuild=false"
+    "dist": "npm run dist:win",
+    "dist:win": "npm run build && node ../../scripts/bundle-server.mjs && node ../../scripts/with-app-builder.mjs electron-builder --win nsis --config.electronDist=../../node_modules/electron/dist --config.npmRebuild=false",
+    "dist:linux": "npm run build && node ../../scripts/bundle-server.mjs && node ../../scripts/with-app-builder.mjs electron-builder --linux AppImage deb --config.electronDist=../../node_modules/electron/dist --config.npmRebuild=false"
   },
   "dependencies": {
     "@pulsedeck/server": "*",
@@ -54,13 +56,6 @@
       {
         "from": "resources/tray-icon.png",
         "to": "tray-icon.png"
-      },
-      {
-        "from": "../../node_modules/koffi",
-        "to": "koffi",
-        "filter": [
-          "**/*"
-        ]
       }
     ],
     "asar": true,
@@ -82,7 +77,16 @@
       ],
       "icon": "resources/icon.ico",
       "artifactName": "PulseDeck-Setup-${version}.${ext}",
-      "signAndEditExecutable": false
+      "signAndEditExecutable": false,
+      "extraResources": [
+        {
+          "from": "../../node_modules/koffi",
+          "to": "koffi",
+          "filter": [
+            "**/*"
+          ]
+        }
+      ]
     },
     "portable": {
       "artifactName": "PulseDeck-Portable-${version}.${ext}"
@@ -96,6 +100,34 @@
       "installerIcon": "resources/icon.ico",
       "uninstallerIcon": "resources/icon.ico",
       "installerHeaderIcon": "resources/icon.ico"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Utility",
+      "icon": "resources/icon.png",
+      "artifactName": "PulseDeck-${version}.${ext}",
+      "desktop": {
+        "Name": "PulseDeck",
+        "Comment": "Desktop widget dashboard",
+        "Categories": "Utility;System;"
+      },
+      "synopsis": "Customizable desktop widget dashboard"
+    },
+    "deb": {
+      "artifactName": "PulseDeck-${version}-amd64.${ext}"
     }
   }
 }

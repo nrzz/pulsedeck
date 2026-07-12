@@ -6,9 +6,10 @@ End users should install from [GitHub Releases](https://github.com/nrzz/pulsedec
 
 ## Prerequisites
 
-- Windows 10/11 x64
+- Windows 10/11 x64 **or** Linux x64 (for packaging the matching target)
 - Node.js 18+ ([nodejs.org](https://nodejs.org))
 - Git
+- Linux pack: typical Electron build deps (see electron-builder docs)
 
 ## Development setup
 
@@ -48,29 +49,28 @@ npm start
 
 Serves the built UI from the server package. Default port is **8787** (`PORT` env overrides). The installed desktop app does **not** use this path — it embeds its own server on a free localhost port.
 
-## Build the Windows installer
+## Build installers
 
 ```bash
-npm run dist
+npm run dist:win     # NSIS → apps/desktop/release/PulseDeck-Setup-*.exe
+npm run dist:linux   # AppImage + deb (run on Linux / CI)
 ```
 
-Output (gitignored): `apps/desktop/release/PulseDeck-Setup-*.exe`
+`npm run dist` is an alias for `dist:win`.
 
-If `electron-builder` fails extracting `winCodeSign` with “Cannot create symbolic link”:
+If Windows `electron-builder` fails extracting `winCodeSign` with “Cannot create symbolic link”:
 
 1. Enable **Developer Mode** in Windows Settings, or
 2. Run the build in a terminal with symlink privileges
 
-GitHub Actions builds normally without this issue.
-
 ### Publish a GitHub Release
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
-[`.github/workflows/release.yml`](.github/workflows/release.yml) builds the installer on `windows-latest` and attaches it to the release.
+[`.github/workflows/release.yml`](.github/workflows/release.yml) builds **Windows + Linux** artifacts and attaches them to the release.
 
 ## Checks before a PR
 
@@ -86,7 +86,7 @@ With `npm run dev` (or a built `npm start`) running:
 npm run test:e2e:full
 ```
 
-That is the main E2E entry. It asserts tray/WorkerW contracts, APIs (including **gold/silver** quotes, **news variety**, **GPU dual-adapter order**), all 47 widgets on the board, Stocks gear chips, and News scroll. Other `test:e2e*` scripts are narrower helpers.
+That is the main E2E entry (also runs in CI on ubuntu + windows). It asserts tray/pin contracts (platform-gated), APIs (gold/silver, news variety, GPU), all 47 widgets, Stocks chips, News scroll, and Launcher URL/App gear. Other `test:e2e*` scripts are narrower helpers.
 
 ## Screenshots for docs
 

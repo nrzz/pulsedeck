@@ -7,16 +7,9 @@ export function ActiveAppWidget({ id }: WidgetProps) {
 
   useEffect(() => {
     const poll = async () => {
-      const bridge = window.pulsedeck as
-        | (typeof window.pulsedeck & {
-            getForegroundApp?: () => Promise<string | null>;
-            foregroundApp?: string;
-          })
-        | undefined;
+      const bridge = window.pulsedeck;
       try {
-        const name = bridge?.getForegroundApp
-          ? await bridge.getForegroundApp()
-          : (bridge?.foregroundApp ?? null);
+        const name = bridge?.getForegroundApp ? await bridge.getForegroundApp() : null;
         setApp(name);
       } catch {
         setApp(null);

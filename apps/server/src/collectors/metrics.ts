@@ -1,6 +1,7 @@
 import si from 'systeminformation';
 import type { SystemMetrics } from '@pulsedeck/shared';
 import { enrichGpuMetrics } from './gpu.js';
+import { collectFans } from './fans.js';
 
 let publicIpCache: { ip?: string; fetchedAt: number } = { fetchedAt: 0 };
 const PUBLIC_IP_TTL = 10 * 60 * 1000;
@@ -67,6 +68,14 @@ function needsGpuEnrich(): boolean {
   );
 }
 
+function needsFans(): boolean {
+  return (
+    activeWidgetTypes.size === 0 ||
+    activeWidgetTypes.has('fans') ||
+    activeWidgetTypes.has('sensors')
+  );
+}
+
 async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -117,6 +126,7 @@ async function refreshSlowMetrics(): Promise<void> {
     networkInterfaces,
     disksIO,
     cpuCurrentSpeed,
+    fanData,
   ] = await Promise.all([
     withTimeout(si.graphics(), t(4000)),
     withTimeout(si.fsSize(), t(5000)),
@@ -142,6 +152,12 @@ async function refreshSlowMetrics(): Promise<void> {
       ? withTimeout(
           si.cpuCurrentSpeed().catch(() => null),
           t(2500),
+        )
+      : Promise.resolve(null),
+    needsFans()
+      ? withTimeout(
+          collectFans().catch(() => [] as { label: string; rpm: number }[]),
+          t(3000),
         )
       : Promise.resolve(null),
   ]);
@@ -242,7 +258,13 @@ async function refreshSlowMetrics(): Promise<void> {
             uptime: time.uptime,
           },
     localIps: localIps.length ? localIps : slowCache.localIps,
-    fans: slowCache.fans || [],
+    fans:
+      fanData && Array.isArray(fanData) && fanData.length
+        ? fanData.map((f) => ({
+            label: f.label || 'Fan',
+            rpm: Math.round(f.rpm),
+          }))
+        : slowCache.fans || [],
     diskIO: disksIO
       ? {
           rIO_sec: disksIO.rIO_sec ?? undefined,

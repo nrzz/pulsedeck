@@ -1,6 +1,6 @@
 # Architecture
 
-PulseDeck is an npm workspaces monorepo: a React widget UI, a local Fastify metrics server, and an Electron shell that packages them for Windows.
+PulseDeck is an npm workspaces monorepo: a React widget UI, a local Fastify metrics server, and an Electron shell that packages them for **Windows and Linux**.
 
 **End users:** you do not need this document — install from [Releases](https://github.com/nrzz/pulsedeck/releases/latest) and see [INSTALL.md](INSTALL.md).
 
@@ -11,7 +11,7 @@ pulsedeck/
 ├── apps/
 │   ├── web/        # Vite + React + Tailwind + react-grid-layout + Zustand
 │   ├── server/     # Fastify + WebSocket + systeminformation + external APIs
-│   └── desktop/    # Electron main/preload, tray, NSIS installer
+│   └── desktop/    # Electron main/preload, tray, NSIS + AppImage/deb
 ├── packages/
 │   └── shared/     # Types, default config/presets, WIDGET_CATALOG
 ├── docs/           # Install, architecture, widget SOP
@@ -60,7 +60,8 @@ See [CREATING_WIDGETS.md](CREATING_WIDGETS.md) and [WIDGETS.md](WIDGETS.md).
 
 - Frameless, transparent, `skipTaskbar`
 - Preload bridge (`window.pulsedeck`) for lock / edit / settings / float / corner IPC
-- **WorkerW** wallpaper attach (`Progman` `0x052C` → `SHELLDLL_DefView` → `SetParent`); fallback `HWND_BOTTOM`
+- **Windows:** WorkerW wallpaper attach (`Progman` `0x052C` → `SHELLDLL_DefView` → `SetParent`); fallback `HWND_BOTTOM`
+- **Linux:** behind-windows stacking (`wmctrl` on X11 when available) or float-over-apps
 - Tray click/right-click: **menu only** + show — never hide on tray interaction
 - Hotkeys: **Ctrl+Alt+P** / **E** / **L**
 - Default: pinned to desktop; optional float-over-apps
@@ -72,9 +73,12 @@ See [CREATING_WIDGETS.md](CREATING_WIDGETS.md) and [WIDGETS.md](WIDGETS.md).
 npm run dist
 ```
 
-Builds shared → server → web → desktop, bundles server with esbuild into `apps/desktop/dist-electron/server.bundle.cjs`, then electron-builder NSIS → `apps/desktop/release/PulseDeck-Setup-*.exe`.
+Builds shared → server → web → desktop, bundles server with esbuild into `apps/desktop/dist-electron/server.bundle.cjs`, then electron-builder:
 
-Tag `v*` triggers `.github/workflows/release.yml` on Windows to attach the installer to a GitHub Release.
+- Windows: `npm run dist:win` → `PulseDeck-Setup-*.exe`
+- Linux: `npm run dist:linux` → AppImage + `.deb`
+
+Tag `v*` triggers `.github/workflows/release.yml` (Windows + Linux jobs) to attach all installers to a GitHub Release.
 
 ## Security notes
 

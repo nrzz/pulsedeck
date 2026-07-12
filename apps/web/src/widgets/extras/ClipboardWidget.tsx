@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { WidgetShell } from '../../components/WidgetShell';
 import { useDashboard } from '../../store/dashboard';
 import type { WidgetProps } from '../registry';
@@ -8,6 +8,25 @@ export function ClipboardWidget({ id, settings }: WidgetProps) {
   const stored = (settings.history as string[]) || [];
   const [local, setLocal] = useState<string[]>([]);
   const history = stored.length ? stored : local;
+
+  useEffect(() => {
+    const poll = async () => {
+      const bridge = window.pulsedeck;
+      if (!bridge?.getClipboardHistory) return;
+      try {
+        const next = await bridge.getClipboardHistory();
+        if (Array.isArray(next) && next.length) {
+          setLocal(next);
+          updateWidgetSettings(id, { history: next.slice(0, 20) });
+        }
+      } catch {
+        // ignore
+      }
+    };
+    void poll();
+    const timer = setInterval(() => void poll(), 2000);
+    return () => clearInterval(timer);
+  }, [id, updateWidgetSettings]);
 
   const clear = () => {
     setLocal([]);
@@ -31,7 +50,7 @@ export function ClipboardWidget({ id, settings }: WidgetProps) {
       }
     >
       <div className="space-y-2">
-        <p className="text-[10px] text-ink-muted">Desktop-only · syncs when available</p>
+        <p className="text-[10px] text-ink-muted">Desktop-only · local history</p>
         {history.length === 0 ? (
           <div className="text-sm text-ink-muted">No clipboard history</div>
         ) : (

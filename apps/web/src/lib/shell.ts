@@ -9,6 +9,22 @@ export interface PulseDeckBridge {
     size?: 'compact' | 'medium' | 'wide',
   ) => Promise<boolean>;
   listDisplays?: () => Promise<unknown[]>;
+  getMedia?: () => Promise<{
+    title?: string;
+    artist?: string;
+    album?: string;
+    playing?: boolean;
+  } | null>;
+  getClipboardHistory?: () => Promise<string[]>;
+  getForegroundApp?: () => Promise<string | null>;
+  openTarget?: (opts: {
+    kind: 'url' | 'app';
+    target: string;
+  }) => Promise<{ ok: true } | { ok: false; error: string }>;
+  pickApp?: () => Promise<string | null>;
+  launcherPresets?: () => Promise<
+    { id: string; title: string; path: string | null; exists: boolean }[]
+  >;
   onLockedChanged: (cb: (locked: boolean) => void) => () => void;
   onEditLayout: (cb: () => void) => () => void;
   onOpenSettings?: (cb: () => void) => () => void;

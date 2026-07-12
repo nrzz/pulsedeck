@@ -1,4 +1,6 @@
 import { execFile } from 'node:child_process';
+import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { promisify } from 'node:util';
 import type { SystemMetrics } from '@pulsedeck/shared';
 
@@ -22,10 +24,51 @@ function isAmd(model: string): boolean {
   return /amd|radeon|rx\s?\d/i.test(model);
 }
 
+function isIntel(model: string): boolean {
+  return /intel|uhd|iris|arc/i.test(model);
+}
+
 function gpuRank(model: string): number {
   if (isNvidia(model) || isAmd(model)) return 0;
-  if (/intel|uhd|iris|arc/i.test(model)) return 2;
+  if (isIntel(model)) return 2;
   return 1;
+}
+
+async function readSysfsNumber(path: string): Promise<number | null> {
+  try {
+    const raw = (await readFile(path, 'utf8')).trim();
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Linux AMD/Intel util from DRM sysfs (no extra tools required). */
+async function fetchLinuxSysfsGpuUtils(): Promise<{ amd: number[]; intel: number[] }> {
+  const amd: number[] = [];
+  const intel: number[] = [];
+  if (process.platform !== 'linux') return { amd, intel };
+  try {
+    const cards = await readdir('/sys/class/drm');
+    for (const name of cards) {
+      if (!/^card\d+$/.test(name)) continue;
+      const base = join('/sys/class/drm', name);
+      const busy =
+        (await readSysfsNumber(join(base, 'device', 'gpu_busy_percent'))) ??
+        (await readSysfsNumber(join(base, 'gt', 'gt0', 'busy'))) ??
+        (await readSysfsNumber(join(base, 'gt', 'gt1', 'busy')));
+      if (busy == null) continue;
+      const clamped = Math.max(0, Math.min(100, busy));
+      // Heuristic: AMD exposes gpu_busy_percent on device/; Intel often gt/*/busy
+      const hasAmdBusy = (await readSysfsNumber(join(base, 'device', 'gpu_busy_percent'))) != null;
+      if (hasAmdBusy) amd.push(clamped);
+      else intel.push(clamped);
+    }
+  } catch {
+    /* ignore */
+  }
+  return { amd, intel };
 }
 
 async function fetchNvidiaSmi(): Promise<NvidiaRow[]> {
@@ -154,10 +197,14 @@ export async function enrichGpuMetrics(
   const gpus = base.map((g) => ({ ...g }));
   if (!gpus.length) return gpus;
 
-  const wantCounters = options.windowsCounters !== false && process.platform === 'win32';
-  const [nvidiaRows, luidUtils] = await Promise.all([
+  const wantWinCounters = options.windowsCounters !== false && process.platform === 'win32';
+  const wantLinuxSysfs = process.platform === 'linux';
+  const [nvidiaRows, luidUtils, linuxUtils] = await Promise.all([
     fetchNvidiaSmi(),
-    wantCounters ? fetchWindowsGpuUtilsByLuid() : Promise.resolve([] as number[]),
+    wantWinCounters ? fetchWindowsGpuUtilsByLuid() : Promise.resolve([] as number[]),
+    wantLinuxSysfs
+      ? fetchLinuxSysfsGpuUtils()
+      : Promise.resolve({ amd: [] as number[], intel: [] as number[] }),
   ]);
 
   const usedNvidia = new Set<number>();
@@ -172,6 +219,19 @@ export async function enrichGpuMetrics(
     if (row.memoryUsed != null) gpu.memoryUsed = row.memoryUsed;
     if (row.memoryTotal != null) gpu.memoryTotal = row.memoryTotal;
     if (row.temperature != null) gpu.temperature = row.temperature;
+  }
+
+  // Linux AMD / Intel from sysfs
+  let amdIdx = 0;
+  let intelIdx = 0;
+  for (const gpu of gpus) {
+    if (isNvidia(gpu.model) && nvidiaRows.length) continue;
+    if (gpu.utilization && gpu.utilization > 0) continue;
+    if (isAmd(gpu.model) && amdIdx < linuxUtils.amd.length) {
+      gpu.utilization = linuxUtils.amd[amdIdx++];
+    } else if (isIntel(gpu.model) && intelIdx < linuxUtils.intel.length) {
+      gpu.utilization = linuxUtils.intel[intelIdx++];
+    }
   }
 
   // Assign Windows LUID utils to non-NVIDIA adapters (and any still missing util)

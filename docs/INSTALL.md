@@ -1,45 +1,64 @@
 # Installing PulseDeck
 
-PulseDeck is a **Windows desktop app**. Download the installer from GitHub Releases — no Node.js, no command line, no clone of this repo.
+PulseDeck is a **desktop app for Windows and Linux**. Download from GitHub Releases — no Node.js required for normal use.
 
 ![Desktop widget board](screenshot-widget.png)
 
 ---
 
-## 1. Download
+## Windows
 
 1. Open **[Releases → Latest](https://github.com/nrzz/pulsedeck/releases/latest)**
-2. Download **`PulseDeck-Setup-x.x.x.exe`** (current: **1.0.7**)
-3. Double-click the file and follow the installer
-4. Launch **PulseDeck** from the Start menu or desktop shortcut
+2. Download **`PulseDeck-Setup-x.x.x.exe`** (current: **1.1.0**)
+3. Run the installer (SmartScreen: **More info → Run anyway**)
+4. Launch **PulseDeck** from the Start menu
 
-### Windows SmartScreen
+Config: `%APPDATA%\PulseDeck\config.json`  
+Install: usually `%LOCALAPPDATA%\Programs\PulseDeck\`
 
-Official builds are **not code-signed**. Windows may show “Windows protected your PC”:
-
-1. Click **More info**
-2. Click **Run anyway**
-
-That is expected for many open-source apps. The source is public on GitHub.
-
-### Firewall
-
-PulseDeck runs a local server on `127.0.0.1` only. Allow **private networks** if Windows asks. External widgets (crypto, weather, news, public IP) need outbound HTTPS.
+The board pins to the **wallpaper layer** (WorkerW). Tray click opens the menu without hiding the board.
 
 ---
 
-## 2. First launch
+## Linux
 
-You should see:
+1. Open **[Releases → Latest](https://github.com/nrzz/pulsedeck/releases/latest)**
+2. Download either:
+   - **`PulseDeck-x.x.x.AppImage`** — portable
+   - **`PulseDeck-x.x.x-amd64.deb`** — Debian/Ubuntu package
+3. **AppImage:**
+   ```bash
+   chmod +x PulseDeck-*.AppImage
+   ./PulseDeck-*.AppImage
+   ```
+4. **deb:**
+   ```bash
+   sudo apt install ./PulseDeck-*-amd64.deb
+   pulsedeck
+   ```
 
-| Expect                         | Detail                                                              |
-| ------------------------------ | ------------------------------------------------------------------- |
-| Glass widgets on the wallpaper | Board is **pinned behind apps** by default                          |
-| Toolbar                        | **Edit · Add · Presets · Customize** (always visible unless locked) |
-| Close window                   | Hides to the **system tray** (does not quit)                        |
-| Tray click / right-click       | Opens the menu — board stays visible (including tray `^`)           |
+Config: `~/.config/PulseDeck/config.json`
 
-![Full dashboard view](screenshot-dashboard.png)
+### Linux notes
+
+| Topic          | Detail                                                         |
+| -------------- | -------------------------------------------------------------- |
+| Tray           | May need `libayatana-appindicator` / StatusNotifier support    |
+| Behind windows | Best-effort (X11 + `wmctrl` helps); not a true wallpaper embed |
+| Wayland        | App runs; global hotkeys may be blocked by the compositor      |
+| GPU util       | `nvidia-smi` + DRM sysfs for AMD/Intel when available          |
+| Fans           | hwmon / `lm-sensors` when present                              |
+
+---
+
+## First launch
+
+| Expect        | Detail                                       |
+| ------------- | -------------------------------------------- |
+| Glass widgets | Board visible on desktop / behind apps       |
+| Toolbar       | **Edit · Add · Presets · Customize**         |
+| Close window  | Hides to the **system tray** (does not quit) |
+| Tray click    | Opens the menu — board stays visible         |
 
 ### Hotkeys
 
@@ -49,77 +68,40 @@ You should see:
 | **Ctrl+Alt+E** | Edit layout                   |
 | **Ctrl+Alt+L** | Lock / unlock (click-through) |
 
-### Optional tray items
+### Launcher apps
 
-- **Float over apps** — put the board above Chrome/other windows
-- **Quit** — fully exit PulseDeck
-
----
-
-## 3. Customize your board
-
-![Customize panel](screenshot-customize.png)
-
-1. Click **Customize** (gear)
-2. Change theme, accent, density, scale, grid columns
-3. Set **News tray** defaults (topics, suggestion packs)
-4. Apply a **Layout pack** (Minimal, System, Network, Finance, Focus, Full monitor)
-
-![Add widget catalog — 47 types](screenshot-add-widget.png)
-
-To add widgets: **Edit → Add** → search or pick a category → click a type.
+Gear on **Launcher** → **App** → pick presets (Cursor, Chrome, …) or **Browse…** for any `.exe` / `.desktop`. URLs still work via the **URL** tab.
 
 ---
 
-## Where files live
+## Customize
 
-| Item              | Location                                     |
-| ----------------- | -------------------------------------------- |
-| App install       | Usually `%LOCALAPPDATA%\Programs\PulseDeck\` |
-| Layout & settings | `%APPDATA%\PulseDeck\config.json`            |
+1. Click **Customize**
+2. Theme, accent, density, scale, grid columns
+3. **News tray** defaults and layout packs
 
-```powershell
-explorer $env:APPDATA\PulseDeck
-```
-
----
-
-## Reset / uninstall
-
-**Reset layout**
-
-1. Tray → **Quit**
-2. Delete `%APPDATA%\PulseDeck\config.json`
-3. Start PulseDeck again
-
-Or use **Settings → Reset to defaults** in the app.
-
-**Uninstall**
-
-- Windows **Settings → Apps → PulseDeck → Uninstall**, or the Start menu uninstaller
-- Config may remain under `%APPDATA%\PulseDeck` — delete that folder for a clean slate
+To add widgets: **Edit → Add**.
 
 ---
 
 ## Troubleshooting
 
-| Problem                                            | Fix                                                                |
-| -------------------------------------------------- | ------------------------------------------------------------------ |
-| Won’t start / blank window                         | Quit from tray, delete `%APPDATA%\PulseDeck\config.json`, relaunch |
-| Board disappears on tray `^`                       | Update to **1.0.3+** (WorkerW pin); tray should only open the menu |
-| Installer fails to start with `path` / `undefined` | Update to **1.0.3+** — v1.0.1 had a packaged-server bug            |
-| GPU util stuck at **0.0%** / Intel “+1 more”       | Update to **1.0.6+** — discrete GPU first; nvidia-smi + counters   |
-| Can't pick gold/silver in Stocks                   | Update to **1.0.5+** — Stocks gear → Gold ETF / Silver ETF chips   |
-| News one-per-topic / no scroll                     | Update to **1.0.4+** — denser mix + scrollable tray                |
-| No live metrics                                    | Wait a few seconds on first launch (Windows WMI warmup)            |
-| Crypto / weather / news empty                      | Need internet access                                               |
-| Two instances                                      | PulseDeck is single-instance — second launch focuses the first     |
-| High memory                                        | Prefer Minimal/System packs; News tray is titles-only              |
+| Problem                                | Fix                                                    |
+| -------------------------------------- | ------------------------------------------------------ |
+| Won’t start / blank window             | Quit from tray; delete config folder; relaunch         |
+| Board disappears on tray `^` (Windows) | Update to **1.0.3+** (WorkerW pin)                     |
+| GPU util stuck at 0% / Intel “+1 more” | Update to **1.0.6+**                                   |
+| Can't pick gold/silver in Stocks       | Update to **1.0.5+** — Stocks gear chips               |
+| News one-per-topic / no scroll         | Update to **1.0.4+**                                   |
+| Launcher only opens URLs               | Update to **1.1.0+** — gear → App                      |
+| Linux tray missing                     | Install appindicator packages; or use taskbar fallback |
+| Crypto / weather / news empty          | Need internet                                          |
+| High memory                            | Prefer Minimal/System packs                            |
 
-Still stuck? [Open an issue](https://github.com/nrzz/pulsedeck/issues) with Windows version, PulseDeck version, and steps to reproduce.
+Still stuck? [Open an issue](https://github.com/nrzz/pulsedeck/issues) with OS, PulseDeck version, and steps.
 
 ---
 
 ## Building from source?
 
-For contributors only — see [CONTRIBUTING.md](../CONTRIBUTING.md).
+See **[CONTRIBUTING.md](../CONTRIBUTING.md)** (`npm run dist:win` / `npm run dist:linux`).

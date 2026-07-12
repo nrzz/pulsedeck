@@ -13,6 +13,22 @@ export interface PulseDeckBridge {
   listDisplays: () => Promise<
     { id: number; label: string; primary: boolean; bounds: object; workArea: object }[]
   >;
+  getMedia: () => Promise<{
+    title?: string;
+    artist?: string;
+    album?: string;
+    playing?: boolean;
+  } | null>;
+  getClipboardHistory: () => Promise<string[]>;
+  getForegroundApp: () => Promise<string | null>;
+  openTarget: (opts: {
+    kind: 'url' | 'app';
+    target: string;
+  }) => Promise<{ ok: true } | { ok: false; error: string }>;
+  pickApp: () => Promise<string | null>;
+  launcherPresets: () => Promise<
+    { id: string; title: string; path: string | null; exists: boolean }[]
+  >;
   onLockedChanged: (cb: (locked: boolean) => void) => () => void;
   onEditLayout: (cb: () => void) => () => void;
   onOpenSettings: (cb: () => void) => () => void;
@@ -35,6 +51,12 @@ const bridge: PulseDeckBridge = {
     ipcRenderer.invoke('pulsedeck:list-displays') as Promise<
       { id: number; label: string; primary: boolean; bounds: object; workArea: object }[]
     >,
+  getMedia: () => ipcRenderer.invoke('pulsedeck:get-media'),
+  getClipboardHistory: () => ipcRenderer.invoke('pulsedeck:get-clipboard-history'),
+  getForegroundApp: () => ipcRenderer.invoke('pulsedeck:get-foreground-app'),
+  openTarget: (opts) => ipcRenderer.invoke('pulsedeck:open-target', opts),
+  pickApp: () => ipcRenderer.invoke('pulsedeck:pick-app'),
+  launcherPresets: () => ipcRenderer.invoke('pulsedeck:launcher-presets'),
   onLockedChanged: (cb) => {
     const handler = (_: Electron.IpcRendererEvent, locked: boolean) => cb(locked);
     ipcRenderer.on('pulsedeck:locked-changed', handler);

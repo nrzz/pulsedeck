@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-07-12
+
+### Added
+
+- **Linux desktop packages** — AppImage + `.deb` (x64); dual-OS GitHub Release
+- **Linux behind-windows** pin (wmctrl on X11) + tray label; float mode unchanged
+- **Launcher apps** — URL or App buttons; presets (Cursor, Chrome, …); Browse dialog; legacy URL migration
+- Media / Clipboard / Active App desktop bridges (MPRIS / clipboard poll / foreground window)
+- Linux GPU util via DRM sysfs (AMD/Intel) alongside nvidia-smi; fan RPM via hwmon/`sensors`
+- CI e2e matrix (ubuntu + windows) and Linux pack smoke
+
+### Changed
+
+- Docs and product copy cover Windows & Linux; INSTALL split by OS
+
 ## [1.0.7] — 2026-07-12
 
 ### Fixed
@@ -119,7 +134,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grid drag/resize broken by CSS `transform` entrance animation on grid items
 - Packaged app crash from top-level `import.meta.url` in CJS server bundle
 
-[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.0.7...HEAD
+[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/nrzz/pulsedeck/releases/tag/v1.1.0
 [1.0.7]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.7
 [1.0.6]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.6
 [1.0.5]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.5

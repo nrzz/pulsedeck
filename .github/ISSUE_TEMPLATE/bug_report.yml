@@ -54,8 +54,9 @@ body:
     attributes:
       label: Environment
       placeholder: |
-        Windows version:
-        Install method: installer / npm run dist / npm run dev
+        OS: Windows 11 / Ubuntu 24.04 / …
+        Install method: installer / AppImage / deb / npm run dist / npm run dev
+        Session: X11 / Wayland (Linux)
   - type: textarea
     id: logs
     attributes:

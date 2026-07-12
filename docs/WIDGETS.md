@@ -10,24 +10,24 @@ Collectors are **demand-gated**: expensive calls (`disksIO`, `cpuCurrentSpeed`) 
 
 ## System
 
-| Type          | Name          | Shows                                                             | Default size |
-| ------------- | ------------- | ----------------------------------------------------------------- | ------------ |
-| `cpu`         | CPU           | Load %, cores, sparkline                                          | 3×3          |
-| `ram`         | Memory        | Used %, sparkline                                                 | 3×3          |
-| `gpu`         | GPU           | Util % (nvidia-smi + Windows counters), VRAM; dual-GPU lists both | 3×3          |
-| `disk`        | Disks         | Drive space bars                                                  | 3×3          |
-| `processes`   | Processes     | Top by CPU/RAM (`sortBy`, `limit`)                                | 4×4          |
-| `battery`     | Battery       | Charge / AC                                                       | 2×2          |
-| `system-info` | System Info   | Hostname, OS, uptime                                              | 2×2          |
-| `uptime`      | Uptime        | Time since boot                                                   | 2×2          |
-| `temps`       | Temperatures  | CPU / GPU temps                                                   | 3×2          |
-| `fans`        | Fans          | RPM when OS exposes (often empty)                                 | 3×2          |
-| `cpu-freq`    | CPU Frequency | Current / min / max clocks                                        | 3×3          |
-| `swap`        | Swap          | Pagefile usage                                                    | 3×3          |
-| `disk-io`     | Disk I/O      | Read/write rates                                                  | 3×2          |
-| `top-memory`  | Top Memory    | Processes by RAM                                                  | 4×3          |
-| `sensors`     | Sensors       | Temp + fan + battery strip                                        | 4×2          |
-| `alerts`      | Alerts        | Threshold status board                                            | 3×2          |
+| Type          | Name          | Shows                                                                      | Default size |
+| ------------- | ------------- | -------------------------------------------------------------------------- | ------------ |
+| `cpu`         | CPU           | Load %, cores, sparkline                                                   | 3×3          |
+| `ram`         | Memory        | Used %, sparkline                                                          | 3×3          |
+| `gpu`         | GPU           | Util % (nvidia-smi + Windows PDH / Linux sysfs), VRAM; dual-GPU lists both | 3×3          |
+| `disk`        | Disks         | Drive space bars                                                           | 3×3          |
+| `processes`   | Processes     | Top by CPU/RAM (`sortBy`, `limit`)                                         | 4×4          |
+| `battery`     | Battery       | Charge / AC                                                                | 2×2          |
+| `system-info` | System Info   | Hostname, OS, uptime                                                       | 2×2          |
+| `uptime`      | Uptime        | Time since boot                                                            | 2×2          |
+| `temps`       | Temperatures  | CPU / GPU temps                                                            | 3×2          |
+| `fans`        | Fans          | RPM when OS exposes (often empty)                                          | 3×2          |
+| `cpu-freq`    | CPU Frequency | Current / min / max clocks                                                 | 3×3          |
+| `swap`        | Swap          | Pagefile usage                                                             | 3×3          |
+| `disk-io`     | Disk I/O      | Read/write rates                                                           | 3×2          |
+| `top-memory`  | Top Memory    | Processes by RAM                                                           | 4×3          |
+| `sensors`     | Sensors       | Temp + fan + battery strip                                                 | 4×2          |
+| `alerts`      | Alerts        | Threshold status board                                                     | 3×2          |
 
 ## Network
 
@@ -67,7 +67,7 @@ Collectors are **demand-gated**: expensive calls (`disksIO`, `cpuCurrentSpeed`) 
 | `timer`        | Timer        | Pomodoro countdown                                                                    | 2×3          |
 | `stopwatch`    | Stopwatch    | Elapsed timer                                                                         | 2×3          |
 | `quick-links`  | Quick Links  | Bookmarks                                                                             | 3×3          |
-| `launcher`     | Launcher     | Big app/URL buttons                                                                   | 4×2          |
+| `launcher`     | Launcher     | URL **or** desktop app buttons (presets + Browse); opens via Electron                 | 4×2          |
 | `headline`     | Headline     | Single RSS item (`feedUrl`)                                                           | 4×2          |
 | `news`         | News tray    | Scrollable mixed headlines (up to 8 topics, ~20 items); suggestion packs + custom RSS | 4×5          |
 | `media`        | Now Playing  | Desktop SMTC (empty in browser)                                                       | 4×2          |
@@ -94,7 +94,9 @@ Also: default browser dashboard and compact **Desktop** shell preset.
 
 ## Desktop pin
 
-Electron pins to the wallpaper layer via **WorkerW**. Tray click opens the menu and keeps the board visible; optional **Float over apps** mode.
+**Windows:** Electron pins to the wallpaper layer via **WorkerW**. Tray click opens the menu and keeps the board visible; optional **Float over apps**.
+
+**Linux:** **Behind windows** (best-effort stacking; `wmctrl` on X11 helps) or **Float over apps**. True wallpaper embed is not available.
 
 ## Related
 

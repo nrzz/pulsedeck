@@ -35,6 +35,68 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Desktop Electron build is Windows-only (see release.yml on tags)
       - name: Typecheck desktop
         run: npm run typecheck -w @pulsedeck/desktop
+
+      - name: Linux pack smoke (dir)
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          BIN="node_modules/app-builder-bin/linux/x64/app-builder"
+          if [ ! -f "$BIN" ]; then
+            npm install app-builder-bin@5.0.0-alpha.10 --force --no-save || true
+          fi
+          chmod +x "$BIN" 2>/dev/null || true
+          npm run pack -w @pulsedeck/desktop
+
+  e2e:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+
+      - name: Start server
+        shell: bash
+        run: |
+          npm run start -w @pulsedeck/server &
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8787/api/health >/dev/null; then
+              echo "server ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "server failed to start"
+          exit 1
+
+      - name: E2E full
+        env:
+          PULSEDECK_URL: http://127.0.0.1:8787
+        run: npm run test:e2e:full
+
+      - name: Upload e2e artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-${{ matrix.os }}
+          path: apps/web/e2e-artifacts/
+          if-no-files-found: ignore

@@ -9,12 +9,16 @@ import { spawnSync } from 'node:child_process';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = join(root, 'node_modules', 'app-builder-bin');
-const exe = join(src, 'win', 'x64', 'app-builder.exe');
 const bak = join(root, '.cache', 'app-builder-bin');
+
+const isWin = process.platform === 'win32';
+const binRel = isWin ? join('win', 'x64', 'app-builder.exe') : join('linux', 'x64', 'app-builder');
+const exe = join(src, binRel);
+const bakExe = join(bak, binRel);
 
 function ensurePresent() {
   if (existsSync(exe)) return true;
-  if (!existsSync(join(bak, 'win', 'x64', 'app-builder.exe'))) return false;
+  if (!existsSync(bakExe)) return false;
   mkdirSync(dirname(src), { recursive: true });
   rmSync(src, { recursive: true, force: true });
   cpSync(bak, src, { recursive: true });
@@ -22,7 +26,9 @@ function ensurePresent() {
 }
 
 if (!existsSync(exe)) {
-  console.error('app-builder.exe missing — run: npm install app-builder-bin@5.0.0-alpha.10 --force');
+  console.error(
+    `app-builder missing at ${binRel} — run: npm install app-builder-bin@5.0.0-alpha.10 --force`,
+  );
   process.exit(1);
 }
 
@@ -45,7 +51,6 @@ const timer = setInterval(() => {
 
 const [cmd, ...cmdArgs] = args;
 const result = spawnSync(cmd, cmdArgs, {
-  // Keep caller's cwd (apps/desktop) so electronDist=../../node_modules resolves correctly
   cwd: process.cwd(),
   stdio: 'inherit',
   shell: true,

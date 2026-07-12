@@ -87,12 +87,16 @@ async function api(pathname, init) {
 }
 
 function assertTraySource() {
+  const isWin = process.platform === 'win32';
+  const isLinux = process.platform === 'linux';
   const mainPath = path.join(ROOT, 'apps/desktop/src/main.ts');
   const pinPath = path.join(ROOT, 'apps/desktop/src/pin-desktop.ts');
   const preloadPath = path.join(ROOT, 'apps/desktop/src/preload.ts');
+  const desktopPkg = path.join(ROOT, 'apps/desktop/package.json');
   const main = fs.readFileSync(mainPath, 'utf8');
   const pin = fs.readFileSync(pinPath, 'utf8');
   const preload = fs.readFileSync(preloadPath, 'utf8');
+  const pkg = JSON.parse(fs.readFileSync(desktopPkg, 'utf8'));
 
   const checks = [
     ['tray-popup-right-click', /tray\.on\(\s*['"]right-click['"]/],
@@ -103,7 +107,7 @@ function assertTraySource() {
     ['tray-open-settings', /pulsedeck:open-settings/],
     ['tray-add-widget', /pulsedeck:add-widget/],
     ['tray-icon-loader', /loadTrayIcon|tray-icon\.png/],
-    ['desktop-pin-default', /Pinned to desktop/],
+    ['desktop-pin-label', /Pinned to desktop|Behind windows/],
     ['tray-never-hide-on-click', /Keep board visible while using tray/],
     ['no-blur-repin', /Do NOT re-pin on every blur/],
   ];
@@ -112,16 +116,41 @@ function assertTraySource() {
     else fail(name, 'missing in main.ts');
   }
 
-  if (/WorkerW/.test(pin) && /SHELLDLL_DefView/.test(pin) && /0x052[cC]/.test(pin))
-    ok('workerw-pin');
-  else fail('workerw-pin', 'missing WorkerW attach in pin-desktop.ts');
+  if (isWin) {
+    if (/WorkerW/.test(pin) && /SHELLDLL_DefView/.test(pin) && /0x052[cC]/.test(pin))
+      ok('workerw-pin');
+    else fail('workerw-pin', 'missing WorkerW attach in pin-desktop.ts');
+  } else {
+    ok('workerw-pin-skipped', `platform=${process.platform}`);
+  }
+
+  if (isLinux || !isWin) {
+    if (/createLinuxBehindWindowsPinner|wmctrl|Behind windows/.test(pin + main))
+      ok('linux-behind-windows');
+    else if (!isLinux) ok('linux-behind-windows-skipped', process.platform);
+    else fail('linux-behind-windows', 'missing Linux pin helper');
+  }
 
   if (/onOpenSettings/.test(preload) && /onAddWidget/.test(preload)) ok('preload-tray-ipc');
   else fail('preload-tray-ipc', 'missing onOpenSettings/onAddWidget');
 
+  if (/openTarget/.test(preload) && /pickApp/.test(preload) && /getMedia/.test(preload))
+    ok('preload-launcher-bridges');
+  else fail('preload-launcher-bridges', 'missing openTarget/pickApp/getMedia');
+
   const trayPng = path.join(ROOT, 'apps/desktop/resources/tray-icon.png');
   if (fs.existsSync(trayPng)) ok('tray-icon-asset', `${fs.statSync(trayPng).size}b`);
   else fail('tray-icon-asset', 'tray-icon.png missing');
+
+  if (pkg.build?.linux?.target) ok('desktop-linux-targets');
+  else fail('desktop-linux-targets', 'missing build.linux in desktop package.json');
+
+  if (isLinux) {
+    const extra = JSON.stringify(pkg.build?.extraResources || []);
+    // koffi should not be in top-level extraResources for linux (win-only extra)
+    if (!/"to":\s*"koffi"/.test(extra)) ok('linux-no-koffi-extra');
+    else fail('linux-no-koffi-extra', 'koffi still in global extraResources');
+  }
 
   const catalogPath = path.join(ROOT, 'packages/shared/src/index.ts');
   const catalog = fs.readFileSync(catalogPath, 'utf8');
@@ -143,9 +172,12 @@ function assertTraySource() {
   const gpuPath = path.join(ROOT, 'apps/server/src/collectors/gpu.ts');
   if (fs.existsSync(gpuPath)) {
     const gpuSrc = fs.readFileSync(gpuPath, 'utf8');
-    if (/nvidia-smi/.test(gpuSrc) && /GPU Engine/.test(gpuSrc) && /enrichGpuMetrics/.test(gpuSrc))
-      ok('gpu-enrich-collector');
-    else fail('gpu-enrich-collector', 'missing nvidia-smi / PDH enrichment');
+    if (/nvidia-smi/.test(gpuSrc) && /enrichGpuMetrics/.test(gpuSrc)) {
+      if (isWin && /GPU Engine/.test(gpuSrc)) ok('gpu-enrich-collector');
+      else if (!isWin && /gpu_busy_percent|linux/i.test(gpuSrc)) ok('gpu-enrich-collector');
+      else if (/nvidia-smi/.test(gpuSrc)) ok('gpu-enrich-collector', 'nvidia-smi path');
+      else fail('gpu-enrich-collector', 'incomplete enrichment');
+    } else fail('gpu-enrich-collector', 'missing nvidia-smi enrichment');
   } else fail('gpu-enrich-collector', 'gpu.ts missing');
 
   const newsWidget = fs.readFileSync(
@@ -155,6 +187,14 @@ function assertTraySource() {
   if (/allowScroll/.test(newsWidget) && !/slice\(0,\s*[56]\)/.test(newsWidget))
     ok('news-scroll-no-hard-cap');
   else fail('news-scroll-no-hard-cap', 'News still capping visible items or not scrollable');
+
+  const launcherWidget = fs.readFileSync(
+    path.join(ROOT, 'apps/web/src/widgets/extras/LauncherWidget.tsx'),
+    'utf8',
+  );
+  if (/kind:\s*'url'\s*\|\s*'app'|kind === 'app'/.test(launcherWidget) && /openTarget/.test(launcherWidget))
+    ok('launcher-app-url-model');
+  else fail('launcher-app-url-model', 'Launcher missing app/url kind support');
 }
 
 async function testApis() {
@@ -524,6 +564,24 @@ async function testBrowserDashboard(page) {
     else fail('news-widget-scroll-class', 'missing widget-body-scroll');
   } else {
     ok('news-widget-skipped', 'news not on current board');
+  }
+
+  // Launcher gear: URL / App toggle
+  const launcherCard = page.locator('[data-widget-type="launcher"]').first();
+  if (await launcherCard.count()) {
+    const gear = launcherCard.getByRole('button', { name: /Configure widget/i }).first();
+    if (await gear.count()) await gear.click();
+    await page.waitForTimeout(400);
+    const appToggle = page.getByRole('button', { name: /^App$/i });
+    const urlToggle = page.getByRole('button', { name: /^URL$/i });
+    if ((await appToggle.count()) && (await urlToggle.count())) {
+      await appToggle.click();
+      ok('launcher-gear-url-app-toggle');
+    } else {
+      fail('launcher-gear-url-app-toggle', 'URL/App toggles missing');
+    }
+  } else {
+    ok('launcher-gear-skipped', 'launcher not on board');
   }
 
   await page.screenshot({ path: path.join(OUT, 'full-browser.png'), fullPage: true });

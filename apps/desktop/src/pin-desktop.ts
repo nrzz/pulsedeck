@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { execFile } from 'node:child_process';
 import type { BrowserWindow } from 'electron';
 
 type PinFn = (win: BrowserWindow) => void;
@@ -19,14 +20,102 @@ function loadKoffi(): typeof import('koffi') | null {
   }
 }
 
+function isWayland(): boolean {
+  return (process.env.XDG_SESSION_TYPE || '').toLowerCase() === 'wayland';
+}
+
+function wmctrlAvailable(): Promise<boolean> {
+  return new Promise((resolve) => {
+    execFile('wmctrl', ['-m'], { timeout: 2000 }, (err) => resolve(!err));
+  });
+}
+
+let wmctrlOk: boolean | null = null;
+let loggedLinuxPin = false;
+
+async function ensureWmctrl(): Promise<boolean> {
+  if (wmctrlOk != null) return wmctrlOk;
+  if (isWayland()) {
+    wmctrlOk = false;
+    return false;
+  }
+  wmctrlOk = await wmctrlAvailable();
+  return wmctrlOk;
+}
+
+function createLinuxBehindWindowsPinner(): PinFn {
+  return (win: BrowserWindow) => {
+    try {
+      if (win.isDestroyed()) return;
+      win.setAlwaysOnTop(false);
+      win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
+      // Best-effort X11 below stacking via wmctrl
+      void ensureWmctrl().then((ok) => {
+        if (!ok || win.isDestroyed()) {
+          if (!loggedLinuxPin) {
+            loggedLinuxPin = true;
+            console.info(
+              '[PulseDeck] Linux behind-windows: Electron stacking only' +
+                (isWayland() ? ' (Wayland — no wallpaper embed)' : ' (wmctrl not found)'),
+            );
+          }
+          return;
+        }
+        try {
+          const buf = win.getNativeWindowHandle();
+          // X11 Window id is typically a 32/64-bit integer in the handle buffer (LE)
+          const id = buf.readUInt32LE(0);
+          const hex = `0x${id.toString(16)}`;
+          execFile(
+            'wmctrl',
+            ['-i', '-r', hex, '-b', 'add,below,sticky'],
+            { timeout: 3000 },
+            (err) => {
+              if (err && !loggedLinuxPin) {
+                loggedLinuxPin = true;
+                console.warn('[PulseDeck] wmctrl below failed', err.message);
+              }
+            },
+          );
+        } catch (err) {
+          console.warn('[PulseDeck] Linux pin failed', err);
+        }
+      });
+    } catch (err) {
+      console.warn('[PulseDeck] Linux pin failed', err);
+    }
+  };
+}
+
+function createLinuxDetacher(): PinFn {
+  return (win: BrowserWindow) => {
+    if (win.isDestroyed()) return;
+    void ensureWmctrl().then((ok) => {
+      if (!ok || win.isDestroyed()) return;
+      try {
+        const id = win.getNativeWindowHandle().readUInt32LE(0);
+        const hex = `0x${id.toString(16)}`;
+        execFile(
+          'wmctrl',
+          ['-i', '-r', hex, '-b', 'remove,below'],
+          { timeout: 3000 },
+          () => undefined,
+        );
+      } catch {
+        // ignore
+      }
+    });
+  };
+}
+
 /**
  * Attach the window to the Windows desktop wallpaper layer (WorkerW),
  * so it stays on the home screen and does NOT sink under the wallpaper
  * when the tray / taskbar is clicked (HWND_BOTTOM-only bug).
  */
-export function createDesktopPinner(): PinFn {
+function createWindowsDesktopPinner(): PinFn {
   const koffi = loadKoffi();
-  if (!koffi || process.platform !== 'win32') {
+  if (!koffi) {
     return () => undefined;
   }
 
@@ -64,14 +153,12 @@ export function createDesktopPinner(): PinFn {
       const progman = FindWindowW('Progman', null as unknown as string);
       if (!progman) return null;
 
-      // Spawn / refresh WorkerW that draws the wallpaper
       try {
         SendMessageTimeoutW(progman, 0x052c, 0, 0, SMTO_NORMAL, 1000, null);
       } catch {
-        // continue — WorkerW may already exist
+        // continue
       }
 
-      // Classic layout: Progman → SHELLDLL_DefView, then next top-level WorkerW is wallpaper
       const defView = FindWindowExW(progman, null, 'SHELLDLL_DefView', null as unknown as string);
       if (defView) {
         const worker = FindWindowExW(null, progman, 'WorkerW', null as unknown as string);
@@ -81,12 +168,10 @@ export function createDesktopPinner(): PinFn {
         }
       }
 
-      // Alternate: walk top-level WorkerW children looking for DefView
       let worker: unknown = FindWindowExW(null, null, 'WorkerW', null as unknown as string);
       while (worker) {
         const view = FindWindowExW(worker, null, 'SHELLDLL_DefView', null as unknown as string);
         if (view) {
-          // Wallpaper WorkerW is typically the *next* WorkerW after the one with DefView
           const next = FindWindowExW(null, worker, 'WorkerW', null as unknown as string);
           cachedWorkerW = next || worker;
           return cachedWorkerW;
@@ -127,10 +212,9 @@ export function createDesktopPinner(): PinFn {
   }
 }
 
-/** Detach from WorkerW before enabling always-on-top float mode. */
-export function createDesktopDetacher(): PinFn {
+function createWindowsDetacher(): PinFn {
   const koffi = loadKoffi();
-  if (!koffi || process.platform !== 'win32') {
+  if (!koffi) {
     return () => undefined;
   }
   try {
@@ -149,4 +233,17 @@ export function createDesktopDetacher(): PinFn {
   } catch {
     return () => undefined;
   }
+}
+
+export function createDesktopPinner(): PinFn {
+  if (process.platform === 'win32') return createWindowsDesktopPinner();
+  if (process.platform === 'linux') return createLinuxBehindWindowsPinner();
+  return () => undefined;
+}
+
+/** Detach from WorkerW / remove below state before enabling always-on-top float mode. */
+export function createDesktopDetacher(): PinFn {
+  if (process.platform === 'win32') return createWindowsDetacher();
+  if (process.platform === 'linux') return createLinuxDetacher();
+  return () => undefined;
 }

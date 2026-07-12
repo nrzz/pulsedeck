@@ -1,8 +1,8 @@
 # PulseDeck
 
-**Your Windows PC widget dashboard — as a real desktop app.**
+**Your desktop widget dashboard — Windows & Linux.**
 
-Live CPU, RAM, GPU, disks, network, crypto, stocks, weather, news, and more on a glass widget board. Install once, launch from the Start menu. No browser. No terminal.
+Live CPU, RAM, GPU, disks, network, crypto, stocks, weather, news, and more on a glass widget board. Install once; no browser, no terminal required.
 
 [![CI](https://github.com/nrzz/pulsedeck/actions/workflows/ci.yml/badge.svg)](https://github.com/nrzz/pulsedeck/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/nrzz/pulsedeck)](https://github.com/nrzz/pulsedeck/releases/latest)
@@ -11,7 +11,7 @@ Live CPU, RAM, GPU, disks, network, crypto, stocks, weather, news, and more on a
 ![PulseDeck dashboard](docs/screenshot-dashboard.png)
 
 <p align="center">
-  <img src="docs/screenshot-widget.png" alt="Desktop widget board pinned over the wallpaper" width="720" />
+  <img src="docs/screenshot-widget.png" alt="Desktop widget board" width="720" />
 </p>
 
 ---
@@ -21,11 +21,13 @@ Live CPU, RAM, GPU, disks, network, crypto, stocks, weather, news, and more on a
 **Most people only need the installer.** You do not need Node.js or this repository.
 
 1. Open **[latest release](https://github.com/nrzz/pulsedeck/releases/latest)**
-2. Download **`PulseDeck-Setup-1.0.7.exe`** (or the newest `PulseDeck-Setup-x.x.x.exe`)
-3. Run it — if SmartScreen appears: **More info → Run anyway**
-4. Launch **PulseDeck** from the Start menu
+2. Download for your OS:
+   - **Windows:** `PulseDeck-Setup-1.1.0.exe`
+   - **Linux:** `PulseDeck-1.1.0.AppImage` or `PulseDeck-1.1.0-amd64.deb`
+3. Install / run — Windows SmartScreen: **More info → Run anyway**; AppImage: `chmod +x` then run
+4. Launch **PulseDeck**
 
-That’s it. The board pins to your **desktop wallpaper** (behind other apps). Closing the window hides to the tray — it does not quit.
+On **Windows** the board pins to the wallpaper layer. On **Linux** use **Behind windows** (best-effort) or **Float over apps**. Closing the window hides to the tray — it does not quit.
 
 Full guide: **[docs/INSTALL.md](docs/INSTALL.md)**
 
@@ -35,8 +37,9 @@ Full guide: **[docs/INSTALL.md](docs/INSTALL.md)**
 
 |                     |                                                                                    |
 | ------------------- | ---------------------------------------------------------------------------------- |
-| **Desktop pin**     | Stays on the wallpaper layer; opening the tray `^` no longer hides the board       |
+| **Desktop shell**   | Tray app; Windows WorkerW pin; Linux behind-windows / float                        |
 | **47 widgets**      | System, network, finance, clocks, weather, **News tray**, calendar, todo, timer, … |
+| **Launcher**        | Open **URLs and desktop apps** (Cursor, Chrome, …) with presets + Browse           |
 | **One-click packs** | Minimal · System · Network · Finance · Focus · Full monitor                        |
 | **Customize**       | Themes, accents, density, scale, grid columns, news defaults, export/import        |
 | **Tray + hotkeys**  | Click tray for menu · **Ctrl+Alt+P** show/hide · **E** edit · **L** lock           |
@@ -51,17 +54,17 @@ Full guide: **[docs/INSTALL.md](docs/INSTALL.md)**
 
 ## Everyday use
 
-| Action                      | How                                   |
-| --------------------------- | ------------------------------------- |
-| Show / hide board           | **Ctrl+Alt+P** or tray → Show / Hide  |
-| Edit layout (drag / resize) | Toolbar **Edit** or **Ctrl+Alt+E**    |
-| Add a widget                | Edit → **Add** (search + categories)  |
-| Themes & packs              | Toolbar **Customize** or **Presets**  |
-| Lock (click-through)        | **Ctrl+Alt+L** or tray → Lock         |
-| Float above apps            | Tray → **Float over apps** (optional) |
-| Quit fully                  | Tray → **Quit**                       |
+| Action                      | How                                  |
+| --------------------------- | ------------------------------------ |
+| Show / hide board           | **Ctrl+Alt+P** or tray → Show / Hide |
+| Edit layout (drag / resize) | Toolbar **Edit** or **Ctrl+Alt+E**   |
+| Add a widget                | Edit → **Add** (search + categories) |
+| Themes & packs              | Toolbar **Customize** or **Presets** |
+| Lock (click-through)        | **Ctrl+Alt+L** or tray → Lock        |
+| Float above apps            | Tray → **Float over apps**           |
+| Quit fully                  | Tray → **Quit**                      |
 
-Your layout is saved in `%APPDATA%\PulseDeck\config.json`.
+Config: Windows `%APPDATA%\PulseDeck\config.json` · Linux `~/.config/PulseDeck/config.json`
 
 ---
 
@@ -72,7 +75,7 @@ Your layout is saved in `%APPDATA%\PulseDeck\config.json`.
 - **System** — CPU, RAM, GPU (dual-GPU util), disks, I/O, temps, swap, frequency, processes, sensors, alerts
 - **Network** — speed, Wi‑Fi, IPs, ping, adapters, graph, ports, data usage
 - **Finance** — crypto, stocks (**gold/silver** presets), FX, market strip, portfolio
-- **Extras** — clocks, weather (Bangalore default), AQI, **News tray** (scrollable multi-topic), calendar, todo, timer, notes, launcher
+- **Extras** — clocks, weather, AQI, **News tray**, **Launcher (apps + URLs)**, calendar, todo, timer, notes
 
 Full list and settings: **[docs/WIDGETS.md](docs/WIDGETS.md)**
 
@@ -83,20 +86,18 @@ Full list and settings: **[docs/WIDGETS.md](docs/WIDGETS.md)**
 ```
 pulsedeck/
 ├── apps/
-│   ├── desktop/    # Electron shell (window, tray, installer)
+│   ├── desktop/    # Electron shell (Windows + Linux)
 │   ├── server/     # Local metrics API + WebSocket
 │   └── web/        # React widget dashboard
 ├── packages/shared # Types, defaults, catalog
 └── docs/           # Install + widget reference
 ```
 
-The installed `.exe` embeds the server and UI. Day-to-day you never need `npm`.
-
 ---
 
 ## Contributing / building from source
 
-See **[CONTRIBUTING.md](CONTRIBUTING.md)** for `npm install`, `npm run dist`, and tests.
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** for `npm install`, `npm run dist:win` / `dist:linux`, and tests.
 
 Internals: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Authoring widgets: [docs/CREATING_WIDGETS.md](docs/CREATING_WIDGETS.md)
 

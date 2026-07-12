@@ -18,6 +18,8 @@ import type { MenuItemConstructorOptions, NativeImage, Rectangle } from 'electro
 import { createDesktopDetacher, createDesktopPinner } from './pin-desktop';
 import { clampBoundsToDisplays, loadBounds, persistWindowBounds } from './bounds';
 import { loadShellPrefs, saveShellPrefs, type ShellPrefs } from './shell-prefs';
+import { getClipboardHistory, getForegroundApp, getMedia } from './bridges/desktop-info';
+import { launcherAppPresets, openTarget, pickApp, resolvePresetPath } from './bridges/launcher';
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -205,7 +207,15 @@ function applyLock(next: boolean) {
   locked = next;
   if (mainWindow && !mainWindow.isDestroyed()) {
     if (locked) {
-      mainWindow.setIgnoreMouseEvents(true, { forward: true });
+      try {
+        mainWindow.setIgnoreMouseEvents(true, { forward: true });
+      } catch {
+        try {
+          mainWindow.setIgnoreMouseEvents(true);
+        } catch {
+          console.warn('[PulseDeck] click-through lock unsupported on this session');
+        }
+      }
       mainWindow.setResizable(false);
     } else {
       mainWindow.setIgnoreMouseEvents(false);
@@ -299,10 +309,13 @@ function buildTrayMenu(): Menu {
     },
     { type: 'separator' },
     {
-      label: 'Pinned to desktop',
+      label: process.platform === 'linux' ? 'Behind windows' : 'Pinned to desktop',
       type: 'checkbox',
       checked: !shellPrefs.alwaysOnTop,
-      toolTip: 'Stay on the wallpaper (home screen). Apps cover the board when over it.',
+      toolTip:
+        process.platform === 'linux'
+          ? 'Keep the board under other windows (best-effort on Linux).'
+          : 'Stay on the wallpaper (home screen). Apps cover the board when over it.',
       click: (item) => setAlwaysOnTopPref(!item.checked),
     },
     {
@@ -378,22 +391,28 @@ function popupTrayMenu(bounds?: Rectangle) {
   if (mainWindow) scheduleApplyLayer(mainWindow);
 }
 
-function createTray(icon: NativeImage) {
-  const trayIcon = loadTrayIcon(icon);
-  tray = new Tray(trayIcon.isEmpty() ? icon : trayIcon);
-  tray.setToolTip('PulseDeck — click for menu');
-  tray.setContextMenu(buildTrayMenu());
+function createTray(icon: NativeImage): boolean {
+  try {
+    const trayIcon = loadTrayIcon(icon);
+    tray = new Tray(trayIcon.isEmpty() ? icon : trayIcon);
+    tray.setToolTip('PulseDeck — click for menu');
+    tray.setContextMenu(buildTrayMenu());
 
-  tray.on('right-click', (_event, bounds) => {
-    popupTrayMenu(bounds);
-  });
-  tray.on('click', (_event, bounds) => {
-    popupTrayMenu(bounds);
-  });
-  // Show only — hide is explicit via tray menu
-  tray.on('double-click', () => {
-    showBoard();
-  });
+    tray.on('right-click', (_event, bounds) => {
+      popupTrayMenu(bounds);
+    });
+    tray.on('click', (_event, bounds) => {
+      popupTrayMenu(bounds);
+    });
+    tray.on('double-click', () => {
+      showBoard();
+    });
+    return true;
+  } catch (err) {
+    console.warn('[PulseDeck] tray unavailable — showing taskbar entry', err);
+    tray = null;
+    return false;
+  }
 }
 
 function createWindow(url: string, icon: NativeImage) {
@@ -411,14 +430,15 @@ function createWindow(url: string, icon: NativeImage) {
   const bounds =
     saved && saved.width <= 900 && saved.height <= 700 ? clampBoundsToDisplays(saved) : defaults;
 
+  const opaque = process.env.PULSEDECK_OPAQUE === '1';
   mainWindow = new BrowserWindow({
     ...bounds,
     minWidth: 360,
     minHeight: 280,
     show: false,
     frame: false,
-    transparent: true,
-    backgroundColor: '#00000000',
+    transparent: !opaque,
+    backgroundColor: opaque ? '#0f1117' : '#00000000',
     hasShadow: false,
     skipTaskbar: true,
     resizable: true,
@@ -495,6 +515,33 @@ function registerIpc() {
   );
   ipcMain.on('pulsedeck:toggle-edit', () => openEditLayout());
   ipcMain.on('pulsedeck:open-settings', () => openSettingsPanel());
+
+  ipcMain.handle('pulsedeck:get-media', () => getMedia());
+  ipcMain.handle('pulsedeck:get-clipboard-history', () => getClipboardHistory());
+  ipcMain.handle('pulsedeck:get-foreground-app', async () => {
+    const fg = await getForegroundApp();
+    return fg?.title || fg?.name || null;
+  });
+  ipcMain.handle(
+    'pulsedeck:open-target',
+    async (_e, payload: { kind?: string; target?: string }) => {
+      const kind = payload?.kind === 'app' ? 'app' : 'url';
+      return openTarget(kind, String(payload?.target || ''));
+    },
+  );
+  ipcMain.handle('pulsedeck:pick-app', async () => pickApp(mainWindow));
+  ipcMain.handle('pulsedeck:launcher-presets', () => {
+    return launcherAppPresets().map((p) => {
+      const resolved = resolvePresetPath(p);
+      const exists = Boolean(resolved && fs.existsSync(resolved));
+      return {
+        id: p.id,
+        title: p.title,
+        path: resolved,
+        exists,
+      };
+    });
+  });
 }
 
 const gotLock = app.requestSingleInstanceLock();
@@ -514,8 +561,11 @@ if (!gotLock) {
       registerIpc();
       const icon = loadIcon();
       serverBaseUrl = await bootServer();
-      createTray(icon);
+      const trayOk = createTray(icon);
       createWindow(serverBaseUrl, icon);
+      if (!trayOk && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setSkipTaskbar(false);
+      }
 
       screen.on('display-metrics-changed', () => {
         if (mainWindow && mainWindow.isVisible()) scheduleApplyLayer(mainWindow);

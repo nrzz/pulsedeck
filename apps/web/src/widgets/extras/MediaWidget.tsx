@@ -8,16 +8,18 @@ export function MediaWidget({ id }: WidgetProps) {
   const [media, setMedia] = useState<MediaInfo | null>(null);
 
   useEffect(() => {
-    const poll = () => {
-      const bridge = window.pulsedeck as
-        | (typeof window.pulsedeck & { media?: MediaInfo; getMedia?: () => MediaInfo | null })
-        | undefined;
-      const info = bridge?.getMedia?.() ?? bridge?.media ?? null;
-      setMedia(info);
+    const poll = async () => {
+      const bridge = window.pulsedeck;
+      try {
+        const info = bridge?.getMedia ? await bridge.getMedia() : null;
+        setMedia(info);
+      } catch {
+        setMedia(null);
+      }
     };
-    poll();
-    const id = setInterval(poll, 5000);
-    return () => clearInterval(id);
+    void poll();
+    const timer = setInterval(() => void poll(), 5000);
+    return () => clearInterval(timer);
   }, []);
 
   return (
