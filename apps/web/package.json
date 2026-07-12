@@ -1,6 +1,6 @@
 {
   "name": "@pulsedeck/web",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -31,4 +31,5 @@
     "vite": "^6.0.3"
   }
 }
+
 

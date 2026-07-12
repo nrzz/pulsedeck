@@ -9,7 +9,7 @@ PulseDeck is a **Windows desktop app**. Download the installer from GitHub Relea
 ## 1. Download
 
 1. Open **[Releases → Latest](https://github.com/nrzz/pulsedeck/releases/latest)**
-2. Download **`PulseDeck-Setup-x.x.x.exe`** (current: **1.0.1**)
+2. Download **`PulseDeck-Setup-x.x.x.exe`** (current: **1.0.2**)
 3. Double-click the file and follow the installer
 4. Launch **PulseDeck** from the Start menu or desktop shortcut
 
@@ -106,7 +106,8 @@ Or use **Settings → Reset to defaults** in the app.
 | Problem | Fix |
 | ------- | --- |
 | Won’t start / blank window | Quit from tray, delete `%APPDATA%\PulseDeck\config.json`, relaunch |
-| Board disappears on tray `^` | Update to **1.0.1+** (WorkerW pin); tray should only open the menu |
+| Board disappears on tray `^` | Update to **1.0.2+** (WorkerW pin); tray should only open the menu |
+| Installer fails to start with `path` / `undefined` | Update to **1.0.2+** — v1.0.1 had a packaged-server bug |
 | No live metrics | Wait a few seconds on first launch (Windows WMI warmup) |
 | Crypto / weather / news empty | Need internet access |
 | Two instances | PulseDeck is single-instance — second launch focuses the first |

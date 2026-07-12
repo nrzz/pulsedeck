@@ -14,6 +14,13 @@ await esbuild.build({
   target: 'node18',
   sourcemap: false,
   packages: 'bundle',
+  // Electron loads this as CJS — never leave a bare import.meta.url that becomes undefined
+  banner: {
+    js: 'var import_meta_url = require("url").pathToFileURL(__filename).href;',
+  },
+  define: {
+    'import.meta.url': 'import_meta_url',
+  },
   logLevel: 'info',
 });
 

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] — 2026-07-12
+
+### Fixed
+
+- Packaged app crash on launch: `The 'path' argument must be of type string… Received undefined` from empty `import.meta.url` in the CJS server bundle
+
 ### Changed
 
 - Public docs refreshed for **v1.0.1**: clearer install/usage copy and new screenshots (dashboard, widget shell, customize, add-widget catalog)
@@ -63,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grid drag/resize broken by CSS `transform` entrance animation on grid items
 - Packaged app crash from top-level `import.meta.url` in CJS server bundle
 
-[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.2
 [1.0.1]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.1
 [1.0.0]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.0

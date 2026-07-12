@@ -13,6 +13,19 @@ import { pingHosts } from './collectors/ping.js';
 import { fetchCrypto, fetchStocks, fetchWeather, fetchExchange, fetchAqi, fetchHeadline, fetchNews } from './collectors/external.js';
 import { WsHub } from './ws-hub.js';
 
+/** Safe in ESM and in the Electron CJS server bundle (import.meta.url is empty there). */
+function resolveServerDir(): string {
+  try {
+    const metaUrl = import.meta.url as string | undefined;
+    if (typeof metaUrl === 'string' && metaUrl.length > 0) {
+      return path.dirname(fileURLToPath(metaUrl));
+    }
+  } catch {
+    // ignore
+  }
+  return process.cwd();
+}
+
 export interface StartServerOptions {
   port?: number;
   host?: string;
@@ -246,7 +259,7 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
     });
   });
 
-  const here = path.dirname(fileURLToPath(import.meta.url));
+  const here = resolveServerDir();
   const webDistCandidates = [
     options.webDistPath,
     process.env.PULSEDECK_WEB_DIST,
