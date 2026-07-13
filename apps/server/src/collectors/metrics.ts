@@ -2,6 +2,7 @@ import si from 'systeminformation';
 import type { SystemMetrics } from '@pulsedeck/shared';
 import { enrichGpuMetrics } from './gpu.js';
 import { collectFans } from './fans.js';
+import { sampleCpu, sampleMem } from './fast-vitals.js';
 
 let publicIpCache: { ip?: string; fetchedAt: number } = { fetchedAt: 0 };
 const PUBLIC_IP_TTL = 10 * 60 * 1000;
@@ -35,7 +36,7 @@ let lastFast: {
 } | null = null;
 
 /** Slow collectors (processes, GPU, disks, …) — keep sparse to stay lightweight. */
-const SLOW_TTL = 20_000;
+const SLOW_TTL = 30_000;
 
 /** Widget types present on the active preset — gates expensive collectors. */
 let activeWidgetTypes = new Set<string>();
@@ -94,7 +95,23 @@ function needsPublicIp(): boolean {
 }
 
 function needsCpuTemp(): boolean {
-  return wants('cpu', 'temps', 'sensors', 'cpu-temp');
+  // WMI temperature is expensive — only when a temps/sensors widget asks for it
+  return wants('temps', 'sensors', 'cpu-temp');
+}
+
+function needsNetworkStats(): boolean {
+  return wants(
+    'network-speed',
+    'net-graph',
+    'data-usage',
+    'net-adapters',
+    'bandwidth-cap',
+    'alerts',
+  );
+}
+
+function needsSwap(): boolean {
+  return wants('swap');
 }
 
 async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
@@ -338,48 +355,45 @@ export async function collectMetrics(): Promise<SystemMetrics> {
     await slowPromise;
   }
 
-  const [currentLoad, mem, networkStats, cpuTemp] = await Promise.all([
-    withTimeout(si.currentLoad(), 4000),
-    withTimeout(si.mem(), 3000),
-    withTimeout(si.networkStats(), 3000),
+  // CPU + RAM via os.* (cheap). Only hit systeminformation for network / temp / swap when needed.
+  const cpuSample = sampleCpu();
+  const memSample = sampleMem();
+
+  const [networkStats, cpuTemp, swapMem] = await Promise.all([
+    needsNetworkStats() ? withTimeout(si.networkStats(), 3000) : Promise.resolve(null),
     needsCpuTemp()
       ? withTimeout(
           si.cpuTemperature().catch(() => ({ main: undefined as number | undefined })),
           1500,
         )
       : Promise.resolve(null),
+    needsSwap() ? withTimeout(si.mem(), 3000) : Promise.resolve(null),
   ]);
 
   const publicIp = await fetchPublicIp();
 
-  const cpu = currentLoad
-    ? {
-        currentLoad: Math.round(currentLoad.currentLoad * 10) / 10,
-        cores: (currentLoad.cpus || []).map((c) => Math.round(c.load * 10) / 10),
-        temperature: cpuTemp?.main ?? lastFast?.cpu.temperature,
-        speed: slowCache.cpuSpeed?.speed,
-        speedMin: slowCache.cpuSpeed?.speedMin,
-        speedMax: slowCache.cpuSpeed?.speedMax,
-      }
-    : (lastFast?.cpu ?? {
-        currentLoad: 0,
-        cores: [],
-        temperature: cpuTemp?.main,
-        speed: slowCache.cpuSpeed?.speed,
-      });
+  const cpu = {
+    currentLoad: cpuSample.currentLoad,
+    cores: cpuSample.cores,
+    temperature: cpuTemp?.main ?? lastFast?.cpu.temperature,
+    speed: slowCache.cpuSpeed?.speed,
+    speedMin: slowCache.cpuSpeed?.speedMin,
+    speedMax: slowCache.cpuSpeed?.speedMax,
+  };
 
-  const memory = mem
-    ? {
-        total: mem.total,
-        used: mem.used,
-        free: mem.free,
-        percent: Math.round((mem.used / mem.total) * 1000) / 10,
-        swapTotal: mem.swaptotal,
-        swapUsed: mem.swapused,
-        swapFree: mem.swapfree,
-        swapPercent: mem.swaptotal > 0 ? Math.round((mem.swapused / mem.swaptotal) * 1000) / 10 : 0,
-      }
-    : (lastFast?.memory ?? { total: 0, used: 0, free: 0, percent: 0 });
+  const memory = {
+    total: memSample.total,
+    used: memSample.used,
+    free: memSample.free,
+    percent: memSample.percent,
+    swapTotal: swapMem?.swaptotal ?? lastFast?.memory.swapTotal ?? 0,
+    swapUsed: swapMem?.swapused ?? lastFast?.memory.swapUsed ?? 0,
+    swapFree: swapMem?.swapfree ?? lastFast?.memory.swapFree ?? 0,
+    swapPercent:
+      swapMem && swapMem.swaptotal > 0
+        ? Math.round((swapMem.swapused / swapMem.swaptotal) * 1000) / 10
+        : (lastFast?.memory.swapPercent ?? 0),
+  };
 
   const network = networkStats
     ? networkStats.map((n) => ({

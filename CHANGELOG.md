@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] — 2026-07-13
+
+### Fixed
+
+- **Desktop preset pollution** — e2e no longer overwrites Desktop with all widgets; polluted boards auto-heal on load
+- **CPU** — vitals use cheap `os.cpus()` / `os.freemem()` instead of Windows WMI every tick; network/temp/swap only when those widgets are on
+
+### Changed
+
+- Metrics broadcast default **15s**; slow collectors **30s**
+
 ## [1.1.2] — 2026-07-13
 
 ### Fixed
@@ -152,7 +163,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grid drag/resize broken by CSS `transform` entrance animation on grid items
 - Packaged app crash from top-level `import.meta.url` in CJS server bundle
 
-[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/nrzz/pulsedeck/releases/tag/v1.1.3
 [1.1.2]: https://github.com/nrzz/pulsedeck/releases/tag/v1.1.2
 [1.1.1]: https://github.com/nrzz/pulsedeck/releases/tag/v1.1.1
 [1.1.0]: https://github.com/nrzz/pulsedeck/releases/tag/v1.1.0

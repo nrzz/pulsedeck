@@ -329,6 +329,7 @@ async function resetDesktopPreset(page) {
         { id: 'cpu-1', type: 'cpu', settings: {} },
         { id: 'ram-1', type: 'ram', settings: {} },
         { id: 'net-1', type: 'network-speed', settings: {} },
+        { id: 'disk-1', type: 'disk', settings: {} },
         { id: 'clock-1', type: 'clock', settings: { timezones: ['Asia/Kolkata', 'UTC'] } },
         {
           id: 'weather-1',
@@ -340,8 +341,9 @@ async function resetDesktopPreset(page) {
         { i: 'cpu-1', x: 0, y: 0, w: 4, h: 3, minW: 2, minH: 2 },
         { i: 'ram-1', x: 4, y: 0, w: 4, h: 3, minW: 2, minH: 2 },
         { i: 'net-1', x: 8, y: 0, w: 4, h: 3, minW: 3, minH: 2 },
-        { i: 'clock-1', x: 0, y: 3, w: 4, h: 3, minW: 2, minH: 2 },
-        { i: 'weather-1', x: 4, y: 3, w: 4, h: 3, minW: 2, minH: 2 },
+        { i: 'disk-1', x: 0, y: 3, w: 4, h: 3, minW: 2, minH: 2 },
+        { i: 'clock-1', x: 4, y: 3, w: 4, h: 3, minW: 2, minH: 2 },
+        { i: 'weather-1', x: 8, y: 3, w: 4, h: 3, minW: 2, minH: 2 },
       ],
     };
     const presets = [...(c.presets || []).filter((p) => p.id !== 'desktop'), desktop];
@@ -405,7 +407,7 @@ async function testWidgetShell(page) {
 
   const cfgBefore = await api('/api/config');
   const baseCfg = cfgBefore.json;
-  const desktop = baseCfg.presets.find((p) => p.id === 'desktop') || baseCfg.presets[0];
+  // Use a disposable preset so we never clobber the user's lightweight Desktop board
   let slot = 0;
   const widgets = [];
   const layout = [];
@@ -423,12 +425,16 @@ async function testWidgetShell(page) {
     });
     slot += 1;
   }
+  const e2ePreset = {
+    id: 'e2e-all',
+    name: 'E2E All Widgets',
+    widgets,
+    layout,
+  };
   const nextCfg = {
     ...baseCfg,
-    activePresetId: desktop.id,
-    presets: baseCfg.presets.map((p) =>
-      p.id === desktop.id ? { ...p, widgets, layout } : p,
-    ),
+    activePresetId: 'e2e-all',
+    presets: [...(baseCfg.presets || []).filter((p) => p.id !== 'e2e-all'), e2ePreset],
   };
   const putRes = await api('/api/config', {
     method: 'PUT',
@@ -607,6 +613,47 @@ async function main() {
   } catch (err) {
     fail('uncaught', String(err));
     await page.screenshot({ path: path.join(OUT, 'full-error.png'), fullPage: true }).catch(() => {});
+  }
+
+  // Restore lightweight Desktop preset; drop disposable e2e board
+  try {
+    const cfg = await api('/api/config');
+    const c = cfg.json;
+    const desktop = {
+      id: 'desktop',
+      name: 'Desktop',
+      widgets: [
+        { id: 'cpu-1', type: 'cpu', settings: {} },
+        { id: 'ram-1', type: 'ram', settings: {} },
+        { id: 'net-1', type: 'network-speed', settings: {} },
+        { id: 'disk-1', type: 'disk', settings: {} },
+        { id: 'clock-1', type: 'clock', settings: { timezones: ['Asia/Kolkata', 'UTC'] } },
+        {
+          id: 'weather-1',
+          type: 'weather',
+          settings: { lat: 12.9716, lon: 77.5946, city: 'Bangalore' },
+        },
+      ],
+      layout: [
+        { i: 'cpu-1', x: 0, y: 0, w: 4, h: 3, minW: 2, minH: 2 },
+        { i: 'ram-1', x: 4, y: 0, w: 4, h: 3, minW: 2, minH: 2 },
+        { i: 'net-1', x: 8, y: 0, w: 4, h: 3, minW: 3, minH: 2 },
+        { i: 'disk-1', x: 0, y: 3, w: 4, h: 3, minW: 2, minH: 2 },
+        { i: 'clock-1', x: 4, y: 3, w: 4, h: 3, minW: 2, minH: 2 },
+        { i: 'weather-1', x: 8, y: 3, w: 4, h: 3, minW: 2, minH: 2 },
+      ],
+    };
+    const presets = [
+      ...(c.presets || []).filter((p) => p.id !== 'desktop' && p.id !== 'e2e-all'),
+      desktop,
+    ];
+    await api('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...c, presets, activePresetId: 'desktop' }),
+    });
+  } catch {
+    /* ignore cleanup */
   }
 
   await browser.close();

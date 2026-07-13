@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { AppConfig } from '@pulsedeck/shared';
+import type { AppConfig, LayoutPreset } from '@pulsedeck/shared';
 import { createDefaultConfig, createDesktopPreset } from '@pulsedeck/shared';
 
 let DATA_DIR = '';
@@ -33,6 +33,12 @@ function ensureDataDir() {
   }
 }
 
+function isPollutedDesktop(preset: LayoutPreset | undefined): boolean {
+  if (!preset || preset.id !== 'desktop') return false;
+  const widgets = preset.widgets ?? [];
+  return widgets.length > 12 || widgets.some((w) => /-e2e$/i.test(w.id));
+}
+
 export function loadConfig(): AppConfig {
   ensureDataDir();
   if (!fs.existsSync(CONFIG_PATH)) {
@@ -44,11 +50,21 @@ export function loadConfig(): AppConfig {
     const raw = fs.readFileSync(CONFIG_PATH, 'utf-8');
     const parsed = JSON.parse(raw) as AppConfig;
     const defaults = createDefaultConfig();
-    const presets = parsed.presets?.length ? [...parsed.presets] : [...defaults.presets];
+    let presets = parsed.presets?.length ? [...parsed.presets] : [...defaults.presets];
     if (!presets.some((p) => p.id === 'desktop')) {
       presets.push(createDesktopPreset());
     }
-    return {
+
+    let healedDesktop = false;
+    presets = presets.map((p) => {
+      if (p.id === 'desktop' && isPollutedDesktop(p)) {
+        healedDesktop = true;
+        return createDesktopPreset();
+      }
+      return p;
+    });
+
+    const config: AppConfig = {
       ...defaults,
       ...parsed,
       theme: { ...defaults.theme, ...parsed.theme },
@@ -56,7 +72,13 @@ export function loadConfig(): AppConfig {
       apiKeys: { ...defaults.apiKeys, ...parsed.apiKeys },
       presets,
       quickLinks: parsed.quickLinks ?? defaults.quickLinks,
+      activePresetId: parsed.activePresetId || defaults.activePresetId,
     };
+
+    if (healedDesktop) {
+      saveConfig(config);
+    }
+    return config;
   } catch {
     const defaults = createDefaultConfig();
     saveConfig(defaults);

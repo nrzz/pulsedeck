@@ -5,7 +5,6 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import websocket from '@fastify/websocket';
 import fastifyStatic from '@fastify/static';
-import si from 'systeminformation';
 import type { AppConfig, WsMessage } from '@pulsedeck/shared';
 import { loadConfig, saveConfig, setDataDir } from './config.js';
 import { collectMetrics, setActiveWidgetTypes } from './collectors/metrics.js';
@@ -324,8 +323,8 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
 
   hub.startHeartbeat();
 
-  // 10s vitals — systeminformation/WMI is costly on Windows; avoid 5s thrash
-  const metricsMs = Number(process.env.PULSEDECK_METRICS_MS) || 10_000;
+  // 15s vitals — os-based CPU/RAM is cheap; keep WS traffic low for the renderer
+  const metricsMs = Number(process.env.PULSEDECK_METRICS_MS) || 15_000;
   timers.push(setInterval(broadcastMetrics, Math.max(5_000, metricsMs)));
   timers.push(setInterval(broadcastPing, 15_000));
   timers.push(setInterval(broadcastCrypto, 60_000));
@@ -342,8 +341,11 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
 
   void (async () => {
     try {
-      await si.currentLoad();
-      await new Promise((r) => setTimeout(r, 600));
+      // Prime os.cpus() delta so the first live sample isn't 0%
+      const { sampleCpu } = await import('./collectors/fast-vitals.js');
+      sampleCpu();
+      await new Promise((r) => setTimeout(r, 400));
+      sampleCpu();
       await collectMetrics();
       await broadcastCrypto();
       await broadcastStocks();
