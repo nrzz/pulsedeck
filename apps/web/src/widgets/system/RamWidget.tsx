@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { WidgetShell } from '../../components/WidgetShell';
 import { ProgressRing } from '../../components/ProgressRing';
 import { Sparkline } from '../../components/Sparkline';
@@ -6,11 +7,10 @@ import { useDashboard } from '../../store/dashboard';
 import { formatBytes } from '../../lib/utils';
 import type { WidgetProps } from '../registry';
 
-export function RamWidget({ id }: WidgetProps) {
-  const metrics = useDashboard((s) => s.metrics);
+export const RamWidget = memo(function RamWidget({ id }: WidgetProps) {
+  const mem = useDashboard((s) => s.metrics?.memory);
   const history = useDashboard((s) => s.history.ram);
   const ramThreshold = useDashboard((s) => s.config.shell?.alerts?.ram ?? 90);
-  const mem = metrics?.memory;
   const ready = !!mem && mem.total > 1024;
 
   return (
@@ -31,4 +31,4 @@ export function RamWidget({ id }: WidgetProps) {
       )}
     </WidgetShell>
   );
-}
+});

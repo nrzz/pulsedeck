@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { WidgetShell } from '../../components/WidgetShell';
 import { WidgetSkeleton } from '../../components/WidgetSkeleton';
 import { useDashboard } from '../../store/dashboard';
@@ -8,12 +8,11 @@ import type { SystemMetrics } from '@pulsedeck/shared';
 
 const EMPTY_PROCS: SystemMetrics['processes'] = [];
 
-export function ProcessesWidget({ id, settings }: WidgetProps) {
-  const metrics = useDashboard((s) => s.metrics);
+export const ProcessesWidget = memo(function ProcessesWidget({ id, settings }: WidgetProps) {
+  const ready = useDashboard((s) => !!s.metrics);
   const processes = useDashboard((s) => s.metrics?.processes ?? EMPTY_PROCS);
   const updateWidgetSettings = useDashboard((s) => s.updateWidgetSettings);
   const [sortBy, setSortBy] = useState<'cpu' | 'mem'>((settings.sortBy as 'cpu' | 'mem') || 'cpu');
-  // Cap hard at 6 so a standard tile never needs a scrollbar
   const limit = Math.min(6, Math.max(3, Number(settings.limit ?? 5)));
 
   const sorted = useMemo(() => {
@@ -56,7 +55,7 @@ export function ProcessesWidget({ id, settings }: WidgetProps) {
         </div>
       }
     >
-      {!metrics ? (
+      {!ready ? (
         <WidgetSkeleton label="Loading processes" />
       ) : (
         <div className="h-full min-h-0 overflow-hidden">
@@ -86,4 +85,4 @@ export function ProcessesWidget({ id, settings }: WidgetProps) {
       )}
     </WidgetShell>
   );
-}
+});

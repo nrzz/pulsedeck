@@ -5,6 +5,7 @@ type Client = WebSocket & { isAlive?: boolean };
 
 export class WsHub {
   private clients = new Set<Client>();
+  private heartbeat: ReturnType<typeof setInterval> | null = null;
 
   add(socket: Client) {
     this.clients.add(socket);
@@ -37,7 +38,8 @@ export class WsHub {
   }
 
   startHeartbeat(intervalMs = 30000) {
-    setInterval(() => {
+    if (this.heartbeat) clearInterval(this.heartbeat);
+    this.heartbeat = setInterval(() => {
       for (const client of this.clients) {
         if (client.isAlive === false) {
           client.terminate();
@@ -48,5 +50,12 @@ export class WsHub {
         client.ping();
       }
     }, intervalMs);
+  }
+
+  stopHeartbeat() {
+    if (this.heartbeat) {
+      clearInterval(this.heartbeat);
+      this.heartbeat = null;
+    }
   }
 }

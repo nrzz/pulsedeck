@@ -73,7 +73,7 @@ interface DashboardState {
 }
 
 /** Keep sparkline history short — major RAM win vs longer rings */
-const HISTORY_LEN = 16;
+const HISTORY_LEN = 12;
 
 function pushHistory<T extends { t: number }>(arr: T[], item: T): T[] {
   const next = [...arr, item];
@@ -107,7 +107,23 @@ export const useDashboard = create<DashboardState>((set, get) => ({
       shell: { ...defaults.shell, ...(config.shell ?? {}) },
       apiKeys: { ...defaults.apiKeys, ...config.apiKeys },
     };
-    set({ config: next });
+    const active = next.presets.find((p) => p.id === next.activePresetId) ?? next.presets[0];
+    const liveIds = new Set((active?.widgets ?? []).map((w) => w.id));
+    set((state) => {
+      const prunedNews: Record<string, NewsItem[]> = {};
+      for (const [id, items] of Object.entries(state.newsByWidgetId)) {
+        if (liveIds.has(id)) prunedNews[id] = items;
+      }
+      const types = new Set((active?.widgets ?? []).map((w) => w.type));
+      return {
+        config: next,
+        newsByWidgetId: prunedNews,
+        // Drop finance payloads when those widgets leave the board
+        crypto: types.has('crypto') || types.has('portfolio') ? state.crypto : [],
+        stocks: types.has('stocks') || types.has('portfolio') ? state.stocks : [],
+        ping: types.has('ping') || types.has('ports') ? state.ping : [],
+      };
+    });
     get().applyTheme();
   },
   setMetrics: (metrics) =>

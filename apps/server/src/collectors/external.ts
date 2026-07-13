@@ -202,7 +202,7 @@ export async function fetchHeadline(
   try {
     const res = await fetch(feedUrl, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) return null;
-    const text = await res.text();
+    const text = (await res.text()).slice(0, 180_000);
     const title =
       text.match(/<item>[\s\S]*?<title><!\[CDATA\[(.*?)\]\]><\/title>/i)?.[1] ||
       text.match(/<item>[\s\S]*?<title>(.*?)<\/title>/i)?.[1] ||

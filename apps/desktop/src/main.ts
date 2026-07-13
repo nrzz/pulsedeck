@@ -21,6 +21,11 @@ import { loadShellPrefs, saveShellPrefs, type ShellPrefs } from './shell-prefs';
 import { getClipboardHistory, getForegroundApp, getMedia } from './bridges/desktop-info';
 import { launcherAppPresets, openTarget, pickApp, resolvePresetPath } from './bridges/launcher';
 
+// Memory: shrink Chromium caches / spare renderers before app ready
+app.commandLine.appendSwitch('disable-features', 'SpareRendererForSitePerProcess,BackForwardCache');
+app.commandLine.appendSwitch('disk-cache-size', '1048576');
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=384');
+
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let serverClose: (() => Promise<void>) | null = null;
@@ -458,8 +463,13 @@ function createWindow(url: string, icon: NativeImage) {
       nodeIntegration: false,
       sandbox: true,
       backgroundThrottling: true,
+      spellcheck: false,
+      v8CacheOptions: 'none',
     },
   });
+
+  // Drop Chromium HTTP cache — PulseDeck is local API only
+  void mainWindow.webContents.session.clearCache();
 
   const widgetUrl = `${url}${url.includes('?') ? '&' : '?'}shell=widget`;
   void mainWindow.loadURL(widgetUrl);

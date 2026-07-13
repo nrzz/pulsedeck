@@ -1,14 +1,14 @@
+import { memo } from 'react';
 import { WidgetShell } from '../../components/WidgetShell';
 import { ProgressRing } from '../../components/ProgressRing';
 import { useDashboard } from '../../store/dashboard';
 import { formatBytes } from '../../lib/utils';
 import type { WidgetProps } from '../registry';
 
-export function GpuWidget({ id }: WidgetProps) {
-  const metrics = useDashboard((s) => s.metrics);
-  const gpus = metrics?.gpu ?? [];
+export const GpuWidget = memo(function GpuWidget({ id }: WidgetProps) {
+  const gpus = useDashboard((s) => s.metrics?.gpu);
 
-  if (!gpus.length) {
+  if (!gpus?.length) {
     return (
       <WidgetShell id={id} title="GPU">
         <div className="h-full flex items-center justify-center text-sm text-ink-muted">
@@ -71,4 +71,4 @@ export function GpuWidget({ id }: WidgetProps) {
       </div>
     </WidgetShell>
   );
-}
+});

@@ -8,6 +8,7 @@ import fastifyStatic from '@fastify/static';
 import type { AppConfig, WsMessage } from '@pulsedeck/shared';
 import { loadConfig, saveConfig, setDataDir } from './config.js';
 import { collectMetrics, setActiveWidgetTypes } from './collectors/metrics.js';
+import { slimMetricsForBoard } from './collectors/slim-metrics.js';
 import { pingHosts } from './collectors/ping.js';
 import {
   fetchCrypto,
@@ -84,7 +85,8 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
   async function broadcastMetrics() {
     try {
       const metrics = await collectMetrics();
-      hub.broadcast({ type: 'metrics', payload: metrics });
+      const types = getActiveWidgets().map((w) => w.type);
+      hub.broadcast({ type: 'metrics', payload: slimMetricsForBoard(metrics, types) });
     } catch (err) {
       console.error('[metrics]', err);
     }
@@ -126,7 +128,15 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
     }
     try {
       const quotes = await fetchCrypto(ids.length ? ids : ['bitcoin', 'ethereum']);
-      hub.broadcast({ type: 'crypto', payload: quotes });
+      // Drop image URLs + trim sparklines — big RAM win when many coins cached in the renderer
+      hub.broadcast({
+        type: 'crypto',
+        payload: quotes.map((q) => ({
+          ...q,
+          image: undefined,
+          sparkline: Array.isArray(q.sparkline) ? q.sparkline.slice(-12) : q.sparkline,
+        })),
+      });
     } catch (err) {
       console.error('[crypto]', err);
     }
@@ -272,7 +282,13 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
     return pingHosts(hosts);
   });
 
-  app.get('/api/metrics', async () => collectMetrics());
+  app.get('/api/metrics', async () => {
+    const metrics = await collectMetrics();
+    return slimMetricsForBoard(
+      metrics,
+      getActiveWidgets().map((w) => w.type),
+    );
+  });
 
   app.register(async (fastify) => {
     fastify.get('/ws', { websocket: true }, (socket) => {
@@ -372,6 +388,7 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
     url,
     close: async () => {
       for (const t of timers) clearInterval(t);
+      hub.stopHeartbeat();
       await app.close();
     },
   };

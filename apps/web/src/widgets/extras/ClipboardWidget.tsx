@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react';
 import { WidgetShell } from '../../components/WidgetShell';
-import { useDashboard } from '../../store/dashboard';
 import type { WidgetProps } from '../registry';
 
-export function ClipboardWidget({ id, settings }: WidgetProps) {
-  const updateWidgetSettings = useDashboard((s) => s.updateWidgetSettings);
-  const stored = (settings.history as string[]) || [];
-  const [local, setLocal] = useState<string[]>([]);
-  const history = stored.length ? stored : local;
+export function ClipboardWidget({ id }: WidgetProps) {
+  const [history, setHistory] = useState<string[]>([]);
 
   useEffect(() => {
     const poll = async () => {
@@ -15,22 +11,21 @@ export function ClipboardWidget({ id, settings }: WidgetProps) {
       if (!bridge?.getClipboardHistory) return;
       try {
         const next = await bridge.getClipboardHistory();
-        if (Array.isArray(next) && next.length) {
-          setLocal(next);
-          updateWidgetSettings(id, { history: next.slice(0, 20) });
+        if (Array.isArray(next)) {
+          // Keep in React state only — never persist into config (large pastes blew RAM)
+          setHistory(next.slice(0, 12).map((s) => String(s).slice(0, 500)));
         }
       } catch {
         // ignore
       }
     };
     void poll();
-    const timer = setInterval(() => void poll(), 4000);
+    const timer = setInterval(() => void poll(), 5000);
     return () => clearInterval(timer);
-  }, [id, updateWidgetSettings]);
+  }, [id]);
 
   const clear = () => {
-    setLocal([]);
-    updateWidgetSettings(id, { history: [] });
+    setHistory([]);
   };
 
   return (

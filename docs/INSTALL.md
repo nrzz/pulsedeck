@@ -9,7 +9,7 @@ PulseDeck is a **desktop app for Windows and Linux**. Download from GitHub Relea
 ## Windows
 
 1. Open **[Releases → Latest](https://github.com/nrzz/pulsedeck/releases/latest)**
-2. Download **`PulseDeck-Setup-x.x.x.exe`** (current: **1.1.3**)
+2. Download **`PulseDeck-Setup-x.x.x.exe`** (current: **1.1.4**)
 3. Run the installer (SmartScreen: **More info → Run anyway**)
 4. Launch **PulseDeck** from the Start menu
 
@@ -96,8 +96,8 @@ To add widgets: **Edit → Add**.
 | Launcher only opens URLs               | Update to **1.1.0+** — gear → App                                                                                                |
 | Linux tray missing                     | Install appindicator packages; or use taskbar fallback                                                                           |
 | Crypto / weather / news empty          | Need internet                                                                                                                    |
+| High memory                            | Prefer **Minimal** pack; remove GPU / Processes / News — Chromium alone is ~200–300 MB idle                                      |
 | High CPU (20%+)                        | Switch to **Desktop** preset (6 widgets); remove GPU / Processes; restart after update — polluted Desktop boards are auto-healed |
-| High memory                            | Prefer Minimal/System packs                                                                                                      |
 | Want see-through board                 | Launch with env `PULSEDECK_TRANSPARENT=1` (uses more compositor CPU)                                                             |
 
 Still stuck? [Open an issue](https://github.com/nrzz/pulsedeck/issues) with OS, PulseDeck version, and steps.

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.4] — 2026-07-13
+
+### Fixed
+
+- **Memory** — slim WebSocket metrics to only fields the active board needs; drop crypto image URLs; prune news/finance caches when leaving a preset
+- Clipboard history no longer persisted into `config.json` (large pastes were a RAM edge case)
+- Electron: smaller disk cache, no spare renderer, clear session cache on launch, V8 heap cap
+- Active-app bridge uses koffi instead of spawning PowerShell every poll (Windows)
+- Cap notes size; scrub e2e presets / clipboard blobs on config load
+
 ## [1.1.3] — 2026-07-13
 
 ### Fixed
@@ -163,7 +173,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grid drag/resize broken by CSS `transform` entrance animation on grid items
 - Packaged app crash from top-level `import.meta.url` in CJS server bundle
 
-[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.1.3...HEAD
+[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.1.4...HEAD
+[1.1.4]: https://github.com/nrzz/pulsedeck/releases/tag/v1.1.4
 [1.1.3]: https://github.com/nrzz/pulsedeck/releases/tag/v1.1.3
 [1.1.2]: https://github.com/nrzz/pulsedeck/releases/tag/v1.1.2
 [1.1.1]: https://github.com/nrzz/pulsedeck/releases/tag/v1.1.1

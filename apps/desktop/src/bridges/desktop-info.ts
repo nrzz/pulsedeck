@@ -40,13 +40,13 @@ export async function getMedia(): Promise<MediaInfo> {
   return null;
 }
 
-const CLIP_MAX = 20;
+const CLIP_MAX = 12;
 let clipHistory: string[] = [];
 let lastClip = '';
 
 export function pollClipboard(): string[] {
   try {
-    const text = clipboard.readText().trim();
+    const text = clipboard.readText().trim().slice(0, 2000);
     if (text && text !== lastClip) {
       lastClip = text;
       clipHistory = [text, ...clipHistory.filter((t) => t !== text)].slice(0, CLIP_MAX);
@@ -63,6 +63,27 @@ export function getClipboardHistory(): string[] {
 }
 
 export type ForegroundApp = { name: string; title?: string } | null;
+
+type FgFns = {
+  GetForegroundWindow: () => unknown;
+  GetWindowTextW: (h: unknown, buf: Buffer, n: number) => number;
+};
+let winFg: FgFns | null | undefined;
+
+function loadWinForeground(): FgFns | null {
+  if (winFg !== undefined) return winFg;
+  try {
+    const koffi = require('koffi') as typeof import('koffi');
+    const user32 = koffi.load('user32.dll');
+    winFg = {
+      GetForegroundWindow: user32.func('GetForegroundWindow', 'void *', []),
+      GetWindowTextW: user32.func('int __stdcall GetWindowTextW(void *h, uint16 *s, int n)'),
+    };
+  } catch {
+    winFg = null;
+  }
+  return winFg;
+}
 
 export async function getForegroundApp(): Promise<ForegroundApp> {
   if (process.platform === 'linux') {
@@ -92,28 +113,25 @@ export async function getForegroundApp(): Promise<ForegroundApp> {
 
   if (process.platform === 'win32') {
     try {
+      const fg = loadWinForeground();
+      if (fg) {
+        const hwnd = fg.GetForegroundWindow();
+        if (!hwnd) return null;
+        const buf = Buffer.alloc(512 * 2);
+        const n = fg.GetWindowTextW(hwnd, buf, 512);
+        if (!n) return null;
+        const title = buf.toString('utf16le', 0, Math.min(n, 512) * 2).replace(/\0+$/, '');
+        return title ? { name: title, title } : null;
+      }
       const { stdout } = await execFileAsync(
         'powershell.exe',
         [
           '-NoProfile',
           '-NonInteractive',
           '-Command',
-          `(Add-Type @'
-using System;
-using System.Runtime.InteropServices;
-using System.Text;
-public class Fg {
-  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
-  [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
-  public static string Title() {
-    var sb = new StringBuilder(512);
-    GetWindowText(GetForegroundWindow(), sb, sb.Capacity);
-    return sb.ToString();
-  }
-}
-'@ -PassThru | Out-Null; [Fg]::Title())`,
+          '(Get-Process | Where-Object { $_.MainWindowHandle -ne 0 -and $_.MainWindowTitle } | Sort-Object { -$_.WorkingSet64 } | Select-Object -First 1).MainWindowTitle',
         ],
-        { timeout: 4000, windowsHide: true },
+        { timeout: 2500, windowsHide: true },
       );
       const title = stdout.trim();
       return title ? { name: title, title } : null;
