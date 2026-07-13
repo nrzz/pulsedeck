@@ -66,8 +66,8 @@ If Windows `electron-builder` fails extracting `winCodeSign` with “Cannot crea
 ### Publish a GitHub Release
 
 ```bash
-git tag v1.1.1
-git push origin v1.1.1
+git tag v1.1.2
+git push origin v1.1.2
 ```
 
 [`.github/workflows/release.yml`](.github/workflows/release.yml) builds **Windows + Linux** artifacts and attaches them to the release.

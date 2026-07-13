@@ -9,7 +9,7 @@ PulseDeck is a **desktop app for Windows and Linux**. Download from GitHub Relea
 ## Windows
 
 1. Open **[Releases → Latest](https://github.com/nrzz/pulsedeck/releases/latest)**
-2. Download **`PulseDeck-Setup-x.x.x.exe`** (current: **1.1.1**)
+2. Download **`PulseDeck-Setup-x.x.x.exe`** (current: **1.1.2**)
 3. Run the installer (SmartScreen: **More info → Run anyway**)
 4. Launch **PulseDeck** from the Start menu
 
@@ -86,17 +86,19 @@ To add widgets: **Edit → Add**.
 
 ## Troubleshooting
 
-| Problem                                | Fix                                                    |
-| -------------------------------------- | ------------------------------------------------------ |
-| Won’t start / blank window             | Quit from tray; delete config folder; relaunch         |
-| Board disappears on tray `^` (Windows) | Update to **1.0.3+** (WorkerW pin)                     |
-| GPU util stuck at 0% / Intel “+1 more” | Update to **1.0.6+**                                   |
-| Can't pick gold/silver in Stocks       | Update to **1.0.5+** — Stocks gear chips               |
-| News one-per-topic / no scroll         | Update to **1.0.4+**                                   |
-| Launcher only opens URLs               | Update to **1.1.0+** — gear → App                      |
-| Linux tray missing                     | Install appindicator packages; or use taskbar fallback |
-| Crypto / weather / news empty          | Need internet                                          |
-| High memory                            | Prefer Minimal/System packs                            |
+| Problem                                | Fix                                                                                                                                    |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Won’t start / blank window             | Quit from tray; delete config folder; relaunch                                                                                         |
+| Board disappears on tray `^` (Windows) | Update to **1.0.3+** (WorkerW pin)                                                                                                     |
+| GPU util stuck at 0% / Intel “+1 more” | Update to **1.0.6+**                                                                                                                   |
+| Can't pick gold/silver in Stocks       | Update to **1.0.5+** — Stocks gear chips                                                                                               |
+| News one-per-topic / no scroll         | Update to **1.0.4+**                                                                                                                   |
+| Launcher only opens URLs               | Update to **1.1.0+** — gear → App                                                                                                      |
+| Linux tray missing                     | Install appindicator packages; or use taskbar fallback                                                                                 |
+| Crypto / weather / news empty          | Need internet                                                                                                                          |
+| High CPU (20%+)                        | Switch to **Desktop** preset; remove GPU / Processes widgets; opaque is default (set `PULSEDECK_TRANSPARENT=1` only if you need glass) |
+| High memory                            | Prefer Minimal/System packs                                                                                                            |
+| Want see-through board                 | Launch with env `PULSEDECK_TRANSPARENT=1` (uses more compositor CPU)                                                                   |
 
 Still stuck? [Open an issue](https://github.com/nrzz/pulsedeck/issues) with OS, PulseDeck version, and steps.
 

@@ -16,7 +16,7 @@ export function ActiveAppWidget({ id }: WidgetProps) {
       }
     };
     void poll();
-    const timer = setInterval(() => void poll(), 3000);
+    const timer = setInterval(() => void poll(), 5000);
     return () => clearInterval(timer);
   }, []);
 

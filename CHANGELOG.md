@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] — 2026-07-13
+
+### Fixed
+
+- **High CPU** — expensive collectors (`processes`, GPU/`nvidia-smi`/PDH, wifi, battery, …) only run when matching widgets are on the board
+- Metrics broadcast slowed to **10s** (override with `PULSEDECK_METRICS_MS`); slow collectors every **20s**
+- Desktop window defaults to **opaque** (set `PULSEDECK_TRANSPARENT=1` for glass); skip needless Zustand re-renders
+
+### Changed
+
+- New installs default to the lighter **Desktop** preset instead of the full board
+
 ## [1.1.1] — 2026-07-12
 
 ### Fixed
@@ -140,7 +152,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grid drag/resize broken by CSS `transform` entrance animation on grid items
 - Packaged app crash from top-level `import.meta.url` in CJS server bundle
 
-[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/nrzz/pulsedeck/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/nrzz/pulsedeck/releases/tag/v1.1.2
 [1.1.1]: https://github.com/nrzz/pulsedeck/releases/tag/v1.1.1
 [1.1.0]: https://github.com/nrzz/pulsedeck/releases/tag/v1.1.0
 [1.0.7]: https://github.com/nrzz/pulsedeck/releases/tag/v1.0.7

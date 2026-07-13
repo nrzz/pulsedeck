@@ -112,7 +112,20 @@ export const useDashboard = create<DashboardState>((set, get) => ({
   },
   setMetrics: (metrics) =>
     set((state) => {
+      const prev = state.metrics;
       const net = metrics.network[0];
+      const prevNet = prev?.network[0];
+      // Skip store updates when vitals are unchanged — cuts React re-renders
+      if (
+        prev &&
+        prev.cpu.currentLoad === metrics.cpu.currentLoad &&
+        prev.memory.percent === metrics.memory.percent &&
+        (prevNet?.rxSec ?? 0) === (net?.rxSec ?? 0) &&
+        (prevNet?.txSec ?? 0) === (net?.txSec ?? 0) &&
+        (prev.gpu?.[0]?.utilization ?? 0) === (metrics.gpu?.[0]?.utilization ?? 0)
+      ) {
+        return state;
+      }
       return {
         metrics,
         history: {

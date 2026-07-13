@@ -324,11 +324,12 @@ export async function startServer(options: StartServerOptions = {}): Promise<Sta
 
   hub.startHeartbeat();
 
-  // 5s keeps vitals fresh without thrashing systeminformation / UI re-renders
-  timers.push(setInterval(broadcastMetrics, 5000));
-  timers.push(setInterval(broadcastPing, 10000));
-  timers.push(setInterval(broadcastCrypto, 60000));
-  timers.push(setInterval(broadcastStocks, 60000));
+  // 10s vitals — systeminformation/WMI is costly on Windows; avoid 5s thrash
+  const metricsMs = Number(process.env.PULSEDECK_METRICS_MS) || 10_000;
+  timers.push(setInterval(broadcastMetrics, Math.max(5_000, metricsMs)));
+  timers.push(setInterval(broadcastPing, 15_000));
+  timers.push(setInterval(broadcastCrypto, 60_000));
+  timers.push(setInterval(broadcastStocks, 60_000));
   timers.push(setInterval(broadcastWeather, 15 * 60 * 1000));
 
   setTimeout(() => {

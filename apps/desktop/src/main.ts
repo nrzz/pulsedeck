@@ -430,7 +430,11 @@ function createWindow(url: string, icon: NativeImage) {
   const bounds =
     saved && saved.width <= 900 && saved.height <= 700 ? clampBoundsToDisplays(saved) : defaults;
 
-  const opaque = process.env.PULSEDECK_OPAQUE === '1';
+  // Prefer opaque by default — transparent HWND + DWM layering is a major CPU cost on Windows.
+  // Set PULSEDECK_TRANSPARENT=1 to restore see-through board chrome.
+  const transparent =
+    process.env.PULSEDECK_TRANSPARENT === '1' || process.env.PULSEDECK_OPAQUE === '0';
+  const opaque = !transparent;
   mainWindow = new BrowserWindow({
     ...bounds,
     minWidth: 360,
@@ -453,6 +457,7 @@ function createWindow(url: string, icon: NativeImage) {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      backgroundThrottling: true,
     },
   });
 

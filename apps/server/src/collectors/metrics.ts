@@ -34,7 +34,8 @@ let lastFast: {
   network: SystemMetrics['network'];
 } | null = null;
 
-const SLOW_TTL = 8000;
+/** Slow collectors (processes, GPU, disks, …) — keep sparse to stay lightweight. */
+const SLOW_TTL = 20_000;
 
 /** Widget types present on the active preset — gates expensive collectors. */
 let activeWidgetTypes = new Set<string>();
@@ -43,38 +44,57 @@ export function setActiveWidgetTypes(types: Iterable<string>): void {
   activeWidgetTypes = new Set(types);
 }
 
+/** True only when a matching widget is on the board (empty board = skip). */
+function wants(...types: string[]): boolean {
+  return types.some((t) => activeWidgetTypes.has(t));
+}
+
 function needsDiskIO(): boolean {
-  return (
-    activeWidgetTypes.size === 0 ||
-    activeWidgetTypes.has('disk-io') ||
-    activeWidgetTypes.has('sensors') ||
-    activeWidgetTypes.has('alerts')
-  );
+  return wants('disk-io', 'sensors', 'alerts');
 }
 
 function needsCpuSpeed(): boolean {
-  return (
-    activeWidgetTypes.size === 0 ||
-    activeWidgetTypes.has('cpu-freq') ||
-    activeWidgetTypes.has('sensors')
-  );
+  return wants('cpu-freq', 'sensors');
 }
 
-function needsGpuEnrich(): boolean {
-  return (
-    activeWidgetTypes.size === 0 ||
-    activeWidgetTypes.has('gpu') ||
-    activeWidgetTypes.has('temps') ||
-    activeWidgetTypes.has('sensors')
-  );
+function needsGpu(): boolean {
+  return wants('gpu', 'temps', 'sensors');
 }
 
 function needsFans(): boolean {
-  return (
-    activeWidgetTypes.size === 0 ||
-    activeWidgetTypes.has('fans') ||
-    activeWidgetTypes.has('sensors')
-  );
+  return wants('fans', 'sensors');
+}
+
+function needsProcesses(): boolean {
+  return wants('processes', 'top-memory', 'alerts');
+}
+
+function needsWifi(): boolean {
+  return wants('wifi');
+}
+
+function needsBattery(): boolean {
+  return wants('battery');
+}
+
+function needsDisks(): boolean {
+  return wants('disk', 'disk-io', 'sensors', 'alerts');
+}
+
+function needsSystemInfo(): boolean {
+  return wants('system-info', 'uptime');
+}
+
+function needsLocalIps(): boolean {
+  return wants('ips', 'ip', 'network-info');
+}
+
+function needsPublicIp(): boolean {
+  return wants('ips', 'ip', 'public-ip', 'network-info');
+}
+
+function needsCpuTemp(): boolean {
+  return wants('cpu', 'temps', 'sensors', 'cpu-temp');
 }
 
 async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
@@ -92,6 +112,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null
 }
 
 async function fetchPublicIp(): Promise<string | undefined> {
+  if (!needsPublicIp()) return publicIpCache.ip;
   const now = Date.now();
   if (publicIpCache.ip && now - publicIpCache.fetchedAt < PUBLIC_IP_TTL) {
     return publicIpCache.ip;
@@ -129,20 +150,24 @@ async function refreshSlowMetrics(): Promise<void> {
     cpuCurrentSpeed,
     fanData,
   ] = await Promise.all([
-    withTimeout(si.graphics(), t(4000)),
-    withTimeout(si.fsSize(), t(5000)),
-    withTimeout(
-      si.wifiConnections().catch(() => [] as si.Systeminformation.WifiConnectionData[]),
-      t(3000),
-    ),
-    withTimeout(
-      si.battery().catch(() => null),
-      t(2500),
-    ),
-    withTimeout(si.processes(), t(8000)),
-    withTimeout(si.osInfo(), t(5000)),
-    withTimeout(si.system(), t(3000)),
-    withTimeout(si.networkInterfaces(), t(3000)),
+    needsGpu() ? withTimeout(si.graphics(), t(4000)) : Promise.resolve(null),
+    needsDisks() ? withTimeout(si.fsSize(), t(5000)) : Promise.resolve(null),
+    needsWifi()
+      ? withTimeout(
+          si.wifiConnections().catch(() => [] as si.Systeminformation.WifiConnectionData[]),
+          t(3000),
+        )
+      : Promise.resolve(null),
+    needsBattery()
+      ? withTimeout(
+          si.battery().catch(() => null),
+          t(2500),
+        )
+      : Promise.resolve(null),
+    needsProcesses() ? withTimeout(si.processes(), t(8000)) : Promise.resolve(null),
+    needsSystemInfo() ? withTimeout(si.osInfo(), t(5000)) : Promise.resolve(null),
+    needsSystemInfo() ? withTimeout(si.system(), t(3000)) : Promise.resolve(null),
+    needsLocalIps() ? withTimeout(si.networkInterfaces(), t(3000)) : Promise.resolve(null),
     needsDiskIO()
       ? withTimeout(
           si.disksIO().catch(() => null),
@@ -173,7 +198,9 @@ async function refreshSlowMetrics(): Promise<void> {
         quality: Number(wifiList[0].quality) || 0,
         frequency: wifiList[0].frequency ? Number(wifiList[0].frequency) : undefined,
       }
-    : slowCache.wifi;
+    : needsWifi()
+      ? slowCache.wifi
+      : undefined;
 
   const ifaces = networkInterfaces ?? [];
   const localIps = (Array.isArray(ifaces) ? ifaces : [])
@@ -193,7 +220,9 @@ async function refreshSlowMetrics(): Promise<void> {
             mem: Math.round(p.mem * 10) / 10,
             memRss: p.memRss,
           }))
-      : slowCache.processes;
+      : needsProcesses()
+        ? slowCache.processes
+        : [];
 
   const graphicsOk = graphics != null;
   const controllers = graphics?.controllers ?? [];
@@ -208,9 +237,12 @@ async function refreshSlowMetrics(): Promise<void> {
       temperature: c.temperatureGpu ?? undefined,
     }));
 
-  const gpus = rawGpus.length
-    ? await enrichGpuMetrics(rawGpus, { windowsCounters: needsGpuEnrich() })
-    : [];
+  const gpus =
+    needsGpu() && rawGpus.length
+      ? await enrichGpuMetrics(rawGpus, { enrich: true })
+      : needsGpu()
+        ? []
+        : (slowCache.gpu ?? []);
 
   const disks =
     fsSize && fsSize.length
@@ -223,14 +255,16 @@ async function refreshSlowMetrics(): Promise<void> {
           available: d.available,
           percent: Math.round(d.use * 10) / 10,
         }))
-      : slowCache.disks;
+      : needsDisks()
+        ? slowCache.disks
+        : [];
 
   slowCache = {
     processes: topProcs,
     wifi,
     // Always expose an array: [] when the host has no GPU (e.g. CI VMs).
     // On graphics() timeout, keep the previous sample.
-    gpu: graphicsOk ? gpus : (slowCache.gpu ?? []),
+    gpu: needsGpu() ? (graphicsOk ? gpus : (slowCache.gpu ?? [])) : [],
     disks,
     battery: battery
       ? {
@@ -239,7 +273,9 @@ async function refreshSlowMetrics(): Promise<void> {
           percent: battery.percent,
           timeRemaining: battery.timeRemaining > 0 ? battery.timeRemaining : undefined,
         }
-      : slowCache.battery,
+      : needsBattery()
+        ? slowCache.battery
+        : undefined,
     system: osInfo
       ? {
           manufacturer: system?.manufacturer || slowCache.system?.manufacturer || '',
@@ -252,23 +288,27 @@ async function refreshSlowMetrics(): Promise<void> {
         }
       : slowCache.system
         ? { ...slowCache.system, uptime: time.uptime }
-        : {
-            manufacturer: '',
-            model: '',
-            hostname: 'unknown',
-            platform: 'unknown',
-            release: '',
-            arch: '',
-            uptime: time.uptime,
-          },
-    localIps: localIps.length ? localIps : slowCache.localIps,
+        : needsSystemInfo()
+          ? {
+              manufacturer: '',
+              model: '',
+              hostname: 'unknown',
+              platform: 'unknown',
+              release: '',
+              arch: '',
+              uptime: time.uptime,
+            }
+          : slowCache.system,
+    localIps: localIps.length ? localIps : needsLocalIps() ? slowCache.localIps : [],
     fans:
       fanData && Array.isArray(fanData) && fanData.length
         ? fanData.map((f) => ({
             label: f.label || 'Fan',
             rpm: Math.round(f.rpm),
           }))
-        : slowCache.fans || [],
+        : needsFans()
+          ? slowCache.fans || []
+          : [],
     diskIO: disksIO
       ? {
           rIO_sec: disksIO.rIO_sec ?? undefined,
@@ -276,14 +316,18 @@ async function refreshSlowMetrics(): Promise<void> {
           rBytesPerSec: Number((disksIO as { r_sec?: number }).r_sec) || undefined,
           wBytesPerSec: Number((disksIO as { w_sec?: number }).w_sec) || undefined,
         }
-      : slowCache.diskIO,
+      : needsDiskIO()
+        ? slowCache.diskIO
+        : undefined,
     cpuSpeed: cpuCurrentSpeed
       ? {
           speed: cpuCurrentSpeed.avg,
           speedMin: cpuCurrentSpeed.min,
           speedMax: cpuCurrentSpeed.max,
         }
-      : slowCache.cpuSpeed,
+      : needsCpuSpeed()
+        ? slowCache.cpuSpeed
+        : undefined,
     updatedAt: Date.now(),
   };
 }
@@ -298,10 +342,12 @@ export async function collectMetrics(): Promise<SystemMetrics> {
     withTimeout(si.currentLoad(), 4000),
     withTimeout(si.mem(), 3000),
     withTimeout(si.networkStats(), 3000),
-    withTimeout(
-      si.cpuTemperature().catch(() => ({ main: undefined as number | undefined })),
-      1500,
-    ),
+    needsCpuTemp()
+      ? withTimeout(
+          si.cpuTemperature().catch(() => ({ main: undefined as number | undefined })),
+          1500,
+        )
+      : Promise.resolve(null),
   ]);
 
   const publicIp = await fetchPublicIp();

@@ -519,15 +519,15 @@ export function createDefaultConfig(): AppConfig {
     version: 1,
     theme: { ...DEFAULT_THEME },
     shell: { ...DEFAULT_SHELL },
-    activePresetId: 'default',
+    activePresetId: 'desktop',
     presets: [
+      createDesktopPreset(),
       {
         id: 'default',
-        name: 'Default',
+        name: 'Full board',
         layout: [...DEFAULT_LAYOUT],
         widgets: DEFAULT_WIDGETS.map((w) => ({ ...w, settings: { ...w.settings } })),
       },
-      createDesktopPreset(),
     ],
     apiKeys: {},
     notes: '',

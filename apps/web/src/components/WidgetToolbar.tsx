@@ -61,7 +61,7 @@ export function WidgetToolbar() {
       <div
         className={cn(
           'widget-drag-strip mx-3 mt-2 inline-flex items-center gap-1 rounded-full border border-white/12 px-1.5 py-1',
-          'bg-black/55 backdrop-blur-xl shadow-[0_8px_28px_rgba(0,0,0,0.4)]',
+          'bg-black/80 shadow-[0_8px_28px_rgba(0,0,0,0.4)]',
           visible ? 'opacity-100' : 'opacity-0 pointer-events-none',
         )}
         style={dragStyle}

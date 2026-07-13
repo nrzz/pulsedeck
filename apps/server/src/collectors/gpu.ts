@@ -188,16 +188,30 @@ function matchNvidia(gpu: GpuMetric, rows: NvidiaRow[], used: Set<number>): Nvid
 /**
  * Enrich si.graphics() controllers with real utilization.
  * systeminformation skips nvidia util when it is 0, and never fills Intel util on Windows.
- * nvidia-smi + discrete-first sort always run; Windows PDH counters are optional (slower).
+ * Call only when a GPU/temps/sensors widget is on the board — nvidia-smi + PDH are expensive.
  */
 export async function enrichGpuMetrics(
   base: GpuMetric[],
-  options: { windowsCounters?: boolean } = {},
+  options: { enrich?: boolean; windowsCounters?: boolean } = {},
 ): Promise<GpuMetric[]> {
   const gpus = base.map((g) => ({ ...g }));
   if (!gpus.length) return gpus;
 
-  const wantWinCounters = options.windowsCounters !== false && process.platform === 'win32';
+  // enrich defaults true when called; callers gate invocation. windowsCounters follows enrich.
+  const enrich = options.enrich !== false;
+  if (!enrich) {
+    gpus.sort((a, b) => {
+      const r = gpuRank(a.model) - gpuRank(b.model);
+      if (r !== 0) return r;
+      return (b.utilization || 0) - (a.utilization || 0);
+    });
+    return gpus.map((g) => ({
+      ...g,
+      utilization: Math.round((g.utilization || 0) * 10) / 10,
+    }));
+  }
+
+  const wantWinCounters = (options.windowsCounters ?? true) && process.platform === 'win32';
   const wantLinuxSysfs = process.platform === 'linux';
   const [nvidiaRows, luidUtils, linuxUtils] = await Promise.all([
     fetchNvidiaSmi(),

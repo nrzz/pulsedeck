@@ -24,7 +24,7 @@ export function ClipboardWidget({ id, settings }: WidgetProps) {
       }
     };
     void poll();
-    const timer = setInterval(() => void poll(), 2000);
+    const timer = setInterval(() => void poll(), 4000);
     return () => clearInterval(timer);
   }, [id, updateWidgetSettings]);
 
