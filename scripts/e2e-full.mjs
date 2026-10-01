@@ -504,7 +504,7 @@ async function testBrowserDashboard(page) {
   ok('browser-brand');
 
   try {
-    await page.getByText('Live').waitFor({ timeout: 15000 });
+    await page.getByText('Live', { exact: true }).first().waitFor({ timeout: 15000 });
     ok('browser-live');
   } catch {
     fail('browser-live', 'Live badge missing');
