@@ -114,7 +114,7 @@ async function main() {
     if (browserHeader === 0) ok('no-browser-header');
     else fail('no-browser-header', `found ${browserHeader}`);
 
-    await page.getByText('Live').waitFor({ timeout: 20000 }).catch(() => null);
+    await page.getByText('Live', { exact: true }).first().waitFor({ timeout: 20000 }).catch(() => null);
     // Live text may be sr-only now — check connection via metrics instead
     await page.waitForFunction(
       () =>

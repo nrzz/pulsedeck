@@ -31,7 +31,7 @@ async function main() {
     await page.getByText('PulseDeck', { exact: true }).first().waitFor();
     ok('brand-visible');
 
-    await page.getByText('Live').waitFor({ timeout: 20000 });
+    await page.getByText('Live', { exact: true }).first().waitFor({ timeout: 20000 });
     ok('ws-live');
 
     await page.waitForFunction(

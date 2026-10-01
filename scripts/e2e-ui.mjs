@@ -33,7 +33,7 @@ async function main() {
 
     // Live connection badge (may take a moment)
     try {
-      await page.getByText('Live').waitFor({ timeout: 15000 });
+      await page.getByText('Live', { exact: true }).first().waitFor({ timeout: 15000 });
       ok('ws-live-badge');
     } catch {
       fail('ws-live-badge', 'Live badge not shown within 15s');
